@@ -1,0 +1,13 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/PluginManager"/>
+<use name="DataFormats/Candidate"/>
+<use name="FWCore/ParameterSet"/>
+<use name="DataFormats/JetReco"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="SimDataFormats/GeneratorProducts"/>
+<use name="HLTrigger/HLTcore" />
+<use name="hepmc"/>
+<flags EDM_PLUGIN="1"/>
+<export>
+   <lib name="1"/>
+</export>
