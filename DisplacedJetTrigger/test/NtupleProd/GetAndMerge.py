@@ -5,10 +5,10 @@ curr_dir = os.getcwd()
 
 #get list of samples
 samples = []
-for f in os.listdir(cmssw_dir+'/Configuration/GenProduction/test/DisplacedJetProd/cfgFiles/'):
-        if f.find("HTo2Long")==-1 : continue
+for f in os.listdir(cmssw_dir+'/MyAnalysis/DisplacedJetTrigger/python/'):
+        if f.find("MH_")==-1 : continue
         if f.endswith('pyc') : continue
-	name=f[f.find('MH'):f.find('pythia')-1]
+	name=f[f.find('MH'):f.find('cff')-1]
 	samples.append(name)
 
 # make directory for ntuples

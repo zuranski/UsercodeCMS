@@ -5,9 +5,13 @@
 <use name="DataFormats/JetReco"/>
 <use name="CommonTools/UtilAlgos"/>
 <use name="SimDataFormats/GeneratorProducts"/>
+<use name="TrackingTools/TransientTrack"/>
+<use name="TrackingTools/Records"/>
+<use name="TrackingTools/IPTools"/>
 <use name="HLTrigger/HLTcore" />
+<use name="rootrflx"/>
 <use name="hepmc"/>
-<flags EDM_PLUGIN="1"/>
+<!--flags EDM_PLUGIN="1"/-->
 <export>
-   <lib name="1"/>
+  <lib   name="1"/>
 </export>

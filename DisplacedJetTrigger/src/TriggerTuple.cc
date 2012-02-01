@@ -7,22 +7,30 @@
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/ESHandle.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 //Data formats
 #include "HLTrigger/HLTanalyzers/interface/HLTJets.h"
 #include "HLTrigger/HLTanalyzers/interface/HLTTrack.h"
+#include "DataFormats/Math/interface/deltaR.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
 
 #include "SimDataFormats/Track/interface/SimTrack.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/Vertex/interface/SimVertex.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
+
+
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
 
 //L1Trigger
 #include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMapRecord.h"
@@ -31,6 +39,9 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "TTree.h"
+
+#include "MyAnalysis/DisplacedJetTrigger/interface/jet.h"
+#include "MyAnalysis/DisplacedJetTrigger/interface/pfjet.h"
 
 //
 // class declaration
@@ -60,17 +71,13 @@ class TriggerTuple : public edm::EDAnalyzer {
       TTree* tree;
       bool l1HTT50,l1HTT75,l1HTT100,l1HTT150;
       double ht,l1ht;
-      int nVtxs,nTracks;
-      std::vector<double> jetPt,jetEta,jetPhi;
-      std::vector<double> l1jetPt,l1jetEta,l1jetPhi;
-      std::vector<double> trkPt,trkEta,trkPhi,trkHits,trkPixHits,trkChi2,trkDxy,trkDz;
-      std::vector<double> pfjet4Pt,pfjet4Eta,pfjet4Phi,chgHadFrac4,chgHadN4,neuHadFrac4,neuHadN4;
-      std::vector<double> eleFrac4,eleN4,muFrac4,muN4,phFrac4,phN4;
-      std::vector<double> pfjet1Pt,pfjet1Eta,pfjet1Phi,chgHadFrac1,chgHadN1,neuHadFrac1,neuHadN1;
-      std::vector<double> eleFrac1,eleN1,muFrac1,muN1,phFrac1,phN1;
-      std::vector<double> genJetPt,genJetEta,genJetPhi,XPt,XEta,XPhi;
+      int nPixVtx;
+      std::vector<jet> jets;
+      std::vector<jet> l1jets;
+      std::vector<pfjet> pfjets;
+      std::vector<double> genJetPt,genJetEta,genJetPhi,XPt,XEta,XPhi,XLifeTime,Xlxy;
       std::vector<std::string> triggers; 
-      edm::InputTag jets_,l1jets_,vertices_,tracks_,pfjets1_,pfjets4_;
+      edm::InputTag jets_,l1jets_,vertices_,tracks_,l1tracks_,pfjets_,pftracks_;
 };
 
 //
@@ -79,25 +86,6 @@ class TriggerTuple : public edm::EDAnalyzer {
 
 //
 // static data member definitions
-//
-
-typedef std::pair<const char *, const edm::InputTag *> MissingCollectionInfo;
-
-template <class T>
-static inline
-bool getCollection(const edm::Event & event, std::vector<MissingCollectionInfo> & missing, edm::Handle<T> & handle, const edm::InputTag & name, const char * description)
-{
-    event.getByLabel(name, handle);
-    bool valid = handle.isValid();
-    if (not valid) {
-        missing.push_back( std::make_pair(description, & name) );
-        handle.clear();
-    }
-    return valid;
-}
-
-
-
 //
 // constructors and destructor
 //
@@ -108,8 +96,9 @@ TriggerTuple::TriggerTuple(const edm::ParameterSet& iConfig)
    l1jets_ = iConfig.getParameter<edm::InputTag>("l1jets");
    vertices_ = iConfig.getParameter<edm::InputTag>("vertices");
    tracks_ = iConfig.getParameter<edm::InputTag>("tracks");
-   pfjets1_ = iConfig.getParameter<edm::InputTag>("pfjets1");
-   pfjets4_ = iConfig.getParameter<edm::InputTag>("pfjets4");
+   l1tracks_ = iConfig.getParameter<edm::InputTag>("l1tracks");
+   pftracks_ = iConfig.getParameter<edm::InputTag>("pftracks");
+   pfjets_ = iConfig.getParameter<edm::InputTag>("pfjets");
 
    edm::Service<TFileService> fs;
    tree = fs->make<TTree>("tree","tree");
@@ -126,53 +115,53 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
    using namespace edm;
 
-   std::vector<MissingCollectionInfo> missing;
-
 // clear variables
    l1HTT50=0;l1HTT75=0;l1HTT100=0;l1HTT150=0;
-   ht = 0; l1ht = 0;nVtxs = 0; nTracks = 0;
-   jetPt.clear();jetEta.clear();jetPhi.clear();
-   l1jetPt.clear();l1jetEta.clear();l1jetPhi.clear();
-   trkPt.clear();trkEta.clear();trkPhi.clear();trkHits.clear();trkPixHits.clear();trkChi2.clear();trkDxy.clear();trkDz.clear();
-   pfjet4Pt.clear();pfjet4Eta.clear();pfjet4Phi.clear();chgHadFrac4.clear();chgHadN4.clear();
-   neuHadFrac4.clear();neuHadN4.clear();phFrac4.clear();phN4.clear();eleFrac4.clear();eleN4.clear();
-   muFrac4.clear();muN4.clear();
-   pfjet1Pt.clear();pfjet1Eta.clear();pfjet1Phi.clear();chgHadFrac1.clear();chgHadN1.clear();
-   neuHadFrac1.clear();neuHadN1.clear();phFrac1.clear();phN1.clear();eleFrac1.clear();eleN1.clear();
-   muFrac1.clear();muN1.clear();
-   genJetPt.clear(); genJetEta.clear();genJetPhi.clear();XPt.clear();XEta.clear();XPhi.clear();
+   ht = 0; l1ht = 0; nPixVtx=0;
+   jets.clear(); pfjets.clear(); l1jets.clear();
+   genJetPt.clear(); genJetEta.clear();genJetPhi.clear();
+   XPt.clear();XEta.clear();XPhi.clear();XLifeTime.clear();Xlxy.clear();
    triggers.clear();
 
 // generator information
 
-   if (!iEvent.isRealData()){
+  if (!iEvent.isRealData()){
 
-     edm::Handle<reco::GenParticleCollection> genParticles;
-     iEvent.getByLabel("genParticles",genParticles);
+  Handle<HepMCProduct> EvtHandle;
+  iEvent.getByLabel("generator",EvtHandle);
 
-     for(size_t i=0;i<genParticles->size();i++){
+  //get HepMC event
+  const HepMC::GenEvent* Evt = EvtHandle->GetEvent();
 
-      const reco::GenParticle & p = (*genParticles)[i];
 
-      if((fabs(p.pdgId())==6000111 || fabs(p.pdgId()) == 6000112) && p.status()==3){ // X exotics
+    for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
+      if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Dstar found
+        HepMC::GenVertex *Xvtx = (*p)->end_vertex();
 
-        XPt.push_back(p.pt());
-        XPhi.push_back(p.phi());
-        XEta.push_back(p.eta());
+        reco::Candidate::LorentzVector p4( (*p)->momentum() );
+        XPt.push_back(p4.pt());
+        XPhi.push_back(p4.phi());
+        XEta.push_back(p4.eta());
 
-        for(size_t j=0;j<p.numberOfDaughters();j++){
+        bool flag = false;
 
-          const reco::Candidate* dau = p.daughter(j);
-          if (fabs(dau->pdgId()) > 6) continue;
-          genJetPt.push_back(dau->pt());
-          genJetPhi.push_back(dau->phi());
-          genJetEta.push_back(dau->eta());
-
+        for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
+	  if ((*pout)->pdg_id()>6) continue;
+          reco::Candidate::LorentzVector pout4((*pout)->momentum());
+          genJetPt.push_back(pout4.pt());
+	  genJetPhi.push_back(pout4.phi());
+	  genJetEta.push_back(pout4.eta());
+	  if (!flag){
+	    reco::Candidate::LorentzVector x4((*pout)->end_vertex()->position());
+	    XLifeTime.push_back(x4.P()*p4.mass()/p4.P());
+	    Xlxy.push_back(x4.Pt());
+	    flag = true;
+          }
         }
       }
-     }
-   }
 
+    }
+  }
 
 // L1 HT bits
 
@@ -200,136 +189,177 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	if (hltResults->accept(i))
 	 triggers.push_back(trgNames.at(i));
 
-// HT Cut from HT250 path
+// Vertices
 
-   try{ 
-     edm::Handle<reco::CaloJetCollection> jets;
-     iEvent.getByLabel(jets_,jets);
+   edm::Handle<reco::VertexCollection> vertices;
+   iEvent.getByLabel(vertices_,vertices);
 
-     for (reco::CaloJetCollection::const_iterator jet = jets->begin(); jet != jets->end(); jet++) {
-       double mom = jet->et();
-       if (mom > 40 and fabs(jet->eta()) < 3.) {
-         jetPt.push_back(jet->pt());
-         jetEta.push_back(jet->eta());
-         jetPhi.push_back(jet->phi());
-         ht += mom;
-       }
+
+   nPixVtx=vertices->size();
+   reco::Vertex dummy;
+   const reco::Vertex *pv = &dummy;
+   int ndof = 0;
+   for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); vtx++){
+     if (vtx->ndof() > ndof){
+       pv = &*vtx;
+       ndof = vtx->ndof();
      }
-   } catch(...) {;}
+   }
 
-// HT Cut from HT250L1FastJet path 
-   try{
+// jets and their tracks
 
-     edm::Handle<reco::CaloJetCollection> l1jets;
-     iEvent.getByLabel(l1jets_,l1jets);
-     for (reco::CaloJetCollection::const_iterator jet = l1jets->begin(); jet != l1jets->end(); jet++) {
-        double mom = jet->et();
-        if(mom > 40 and fabs(jet->eta()) < 3.) {
-          l1jetPt.push_back(jet->pt());
-          l1jetEta.push_back(jet->eta());
-          l1jetPhi.push_back(jet->phi());
-          l1ht += mom;
-       }
-     }
-   } catch (...) {;}
+   edm::ESHandle<TransientTrackBuilder> builder;
+   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
 
-// PF jets 1 Trk iteration
+   edm::Handle<reco::TrackCollection> tracksh;
+   iEvent.getByLabel(tracks_,tracksh);
 
-   try{
-     edm::Handle<reco::PFJetCollection> pfjets1;
-     iEvent.getByLabel(pfjets1_,pfjets1);
+   edm::Handle<reco::CaloJetCollection> jetsh;
+   iEvent.getByLabel(jets_,jetsh);
 
-     for (reco::PFJetCollection::const_iterator pfjet = pfjets1->begin(); pfjet != pfjets1->end();++pfjet){
+   for (reco::CaloJetCollection::const_iterator j = jetsh->begin(); j != jetsh->end(); j++) {
 
-	if (pfjet->pt()<20 || fabs(pfjet->eta())>2) continue;
+     if (j->pt() > 40 and fabs(j->eta())<3) ht+=j->et();
 
-	pfjet1Pt.push_back(pfjet->pt());
-	pfjet1Eta.push_back(pfjet->eta());
-	pfjet1Phi.push_back(pfjet->phi());
-
-	chgHadFrac1.push_back(pfjet->chargedHadronEnergyFraction());
-	chgHadN1.push_back(pfjet->chargedHadronMultiplicity());
-
-	neuHadFrac1.push_back(pfjet->neutralHadronEnergyFraction());
-	neuHadN1.push_back(pfjet->neutralMultiplicity());
+     if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
+     jet jet_;
+     jet_.energy = j->energy();
+     jet_.pt = j->pt();
+     jet_.eta = j->eta();
+     jet_.phi = j->phi();
+     std::vector<track> tracks_;
+     GlobalVector direction(j->px(), j->py(), j->pz());
+     
+     for (reco::TrackCollection::const_iterator trk = tracksh->begin(); trk != tracksh->end(); trk++) {
 	
-	phFrac1.push_back(pfjet->photonEnergyFraction());
-	phN1.push_back(pfjet->photonMultiplicity());
+       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+         track track_;
 
-	eleFrac1.push_back(pfjet->electronEnergyFraction());
-	eleN1.push_back(pfjet->electronMultiplicity());
-	
-	muFrac1.push_back(pfjet->muonEnergyFraction());
-	muN1.push_back(pfjet->muonMultiplicity());	
+         reco::TransientTrack transientTrack = builder->build(*trk);
+         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+	   
+         track_.pt = trk->pt();
+         track_.eta = trk->eta();
+         track_.phi = trk->phi();
+         track_.chi2 = trk->normalizedChi2();
+         track_.nHits = trk->numberOfValidHits();
+         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+         track_.dxy = trk->dxy(pv->position());
+         track_.dz = trk->dz(pv->position());
+	 track_.ip3d = ip3d;
+	 track_.algo = trk->algo();
 
+	 tracks_.push_back(track_);
      }
+     jet_.tracks = tracks_;
+     jets.push_back(jet_);
+   }
 
-   } catch (...) {;}
+
+// l1jets and their tracks
+
+   edm::Handle<reco::TrackCollection> l1tracksh;
+   iEvent.getByLabel(l1tracks_,l1tracksh);
+
+   edm::Handle<reco::CaloJetCollection> l1jetsh;
+   iEvent.getByLabel(l1jets_,l1jetsh);
+
+   for (reco::CaloJetCollection::const_iterator j = l1jetsh->begin(); j != l1jetsh->end(); j++) {
+
+     if (j->pt() > 40 and fabs(j->eta())<3) l1ht+=j->et();
+
+     if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
+     jet jet_;
+     jet_.energy = j->energy();
+     jet_.pt = j->pt();
+     jet_.eta = j->eta();
+     jet_.phi = j->phi();
+     std::vector<track> tracks_;
+     GlobalVector direction(j->px(), j->py(), j->pz());
+     
+     for (reco::TrackCollection::const_iterator trk = l1tracksh->begin(); trk != l1tracksh->end(); trk++) {
+	
+       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+         track track_;
+
+         reco::TransientTrack transientTrack = builder->build(*trk);
+         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+	   
+         track_.pt = trk->pt();
+         track_.eta = trk->eta();
+         track_.phi = trk->phi();
+         track_.chi2 = trk->normalizedChi2();
+         track_.nHits = trk->numberOfValidHits();
+         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+         track_.dxy = trk->dxy(pv->position());
+         track_.dz = trk->dz(pv->position());
+	 track_.ip3d = ip3d;
+	 track_.algo = trk->algo();
+
+	 tracks_.push_back(track_);
+     }
+     jet_.tracks = tracks_;
+     l1jets.push_back(jet_);
+   }
 
 // PF jets 4 Trk iteration
 
-   try{
-     edm::Handle<reco::PFJetCollection> pfjets4;
-     iEvent.getByLabel(pfjets4_,pfjets4);
+   edm::Handle<reco::TrackCollection> pftracksh;
+   iEvent.getByLabel(pftracks_,pftracksh);
 
-     for (reco::PFJetCollection::const_iterator pfjet = pfjets4->begin(); pfjet != pfjets4->end();++pfjet){
+   edm::Handle<reco::PFJetCollection> pfjetsh;
+   iEvent.getByLabel(pfjets_,pfjetsh);
 
-	if (pfjet->pt()<20 || fabs(pfjet->eta())>2) continue;
+   for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
 
-	pfjet4Pt.push_back(pfjet->pt());
-	pfjet4Eta.push_back(pfjet->eta());
-	pfjet4Phi.push_back(pfjet->phi());
+     if (j->pt()<40 || fabs(j->eta())>2) continue;
 
-	chgHadFrac4.push_back(pfjet->chargedHadronEnergyFraction());
-	chgHadN4.push_back(pfjet->chargedHadronMultiplicity());
+     pfjet pfjet_;
 
-	neuHadFrac4.push_back(pfjet->neutralHadronEnergyFraction());
-	neuHadN4.push_back(pfjet->neutralMultiplicity());
+     pfjet_.energy = j->energy();
+     pfjet_.pt = j->pt();
+     pfjet_.eta = j->eta();
+     pfjet_.phi = j->phi();
+
+     pfjet_.chgHadFrac = j->chargedHadronEnergyFraction();
+     pfjet_.chgHadN = j->chargedHadronMultiplicity();
+     pfjet_.neuHadFrac = j->neutralHadronEnergyFraction();
+     pfjet_.neuHadN = j->neutralMultiplicity();
+     pfjet_.phFrac = j->photonEnergyFraction();
+     pfjet_.phN = j->photonMultiplicity();
+     pfjet_.eleFrac = j->electronEnergyFraction();
+     pfjet_.eleN = j->electronMultiplicity();
+     pfjet_.muFrac = j->muonEnergyFraction();
+     pfjet_.muN = j->muonMultiplicity();	
+
+     std::vector<track> tracks_;
+     GlobalVector direction(j->px(), j->py(), j->pz());
+     
+     for (reco::TrackCollection::const_iterator trk = pftracksh->begin(); trk != pftracksh->end(); trk++) {
 	
-	phFrac4.push_back(pfjet->photonEnergyFraction());
-	phN4.push_back(pfjet->photonMultiplicity());
+       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+         track track_;
 
-	eleFrac4.push_back(pfjet->electronEnergyFraction());
-	eleN4.push_back(pfjet->electronMultiplicity());
-	
-	muFrac4.push_back(pfjet->muonEnergyFraction());
-	muN4.push_back(pfjet->muonMultiplicity());	
+         reco::TransientTrack transientTrack = builder->build(*trk);
+         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+	   
+         track_.pt = trk->pt();
+         track_.eta = trk->eta();
+         track_.phi = trk->phi();
+         track_.chi2 = trk->normalizedChi2();
+         track_.nHits = trk->numberOfValidHits();
+         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+         track_.dxy = trk->dxy(pv->position());
+         track_.dz = trk->dz(pv->position());
+	 track_.ip3d = ip3d;
+	 track_.algo = trk->algo();
 
+	 tracks_.push_back(track_);
      }
+     pfjet_.tracks = tracks_;
+     pfjets.push_back(pfjet_);
+   }
 
-   } catch (...) {;}
-
-// Vertices
-
-   try{
-     edm::Handle<reco::VertexCollection> vertices;
-     iEvent.getByLabel(vertices_,vertices);
-
-     reco::Vertex dummy;
-     const reco::Vertex *pv = &dummy;
-     int ndof = 0;
-     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); vtx++){
-       if (vtx->ndof() > ndof){
-         pv = &*vtx;
-         ndof = vtx->ndof();
-       }
-     }
-// Tracks
- 
-     edm::Handle<reco::TrackCollection> hlttracks;
-     iEvent.getByLabel(tracks_,hlttracks);
-
-     for (reco::TrackCollection::const_iterator trk = hlttracks->begin(); trk != hlttracks->end(); trk++) {
-       trkPt.push_back(trk->pt());
-       trkEta.push_back(trk->eta());
-       trkPhi.push_back(trk->phi());
-       trkChi2.push_back(trk->normalizedChi2());
-       trkHits.push_back(trk->numberOfValidHits());
-       trkPixHits.push_back(trk->hitPattern().numberOfValidPixelHits());
-       trkDxy.push_back(trk->dxy(pv->position()));
-       trkDz.push_back(trk->dz(pv->position()));
-     }
-   } catch (...) {;}
 
    tree->Fill();
 
@@ -340,59 +370,19 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 void 
 TriggerTuple::beginJob()
 {
+tree->Branch("jets",&jets);
+tree->Branch("l1jets",&l1jets);
+tree->Branch("pfjet",&pfjets);
 
 tree->Branch("l1HTT50",&l1HTT50,"l1HTT50/O");
 tree->Branch("l1HTT75",&l1HTT75,"l1HTT75/O");
 tree->Branch("l1HTT100",&l1HTT100,"l1HTT100/O");
 tree->Branch("l1HTT150",&l1HTT150,"l1HTT150/O");
 
+tree->Branch("nPixVtx",&nPixVtx,"nPixVtx/I");
+
 tree->Branch("ht",&ht,"ht/D");
 tree->Branch("l1ht",&l1ht,"l1ht/D");
-
-tree->Branch("jetPt",&jetPt);
-tree->Branch("jetEta",&jetEta);
-tree->Branch("jetPhi",&jetPhi);
-
-tree->Branch("l1jetPt",&l1jetPt);
-tree->Branch("l1jetEta",&l1jetEta);
-tree->Branch("l1jetPhi",&l1jetPhi);
-
-tree->Branch("trkPt",&trkPt);
-tree->Branch("trkEta",&trkEta);
-tree->Branch("trkPhi",&trkPhi);
-tree->Branch("trkChi2",&trkChi2);
-tree->Branch("trkHits",&trkHits);
-tree->Branch("trkPixHits",&trkPixHits);
-tree->Branch("trkDxy",&trkDxy);
-tree->Branch("trkDz",&trkDz);
-
-tree->Branch("pfjet1Pt",&pfjet1Pt);
-tree->Branch("pfjet1Eta",&pfjet1Eta);
-tree->Branch("pfjet1Phi",&pfjet1Phi);
-tree->Branch("chgHadFrac1",&chgHadFrac1);
-tree->Branch("neuHadFrac1",&neuHadFrac1);
-tree->Branch("phFrac1",&phFrac1);
-tree->Branch("eleFrac1",&eleFrac1);
-tree->Branch("muFrac1",&muFrac1);
-tree->Branch("chgHadN1",&chgHadN1);
-tree->Branch("neuHadN1",&neuHadN1);
-tree->Branch("phN1",&phN1);
-tree->Branch("eleN1",&eleN1);
-tree->Branch("muN1",&muN1);
-
-tree->Branch("pfjet4Pt",&pfjet4Pt);
-tree->Branch("pfjet4Eta",&pfjet4Eta);
-tree->Branch("pfjet4Phi",&pfjet4Phi);
-tree->Branch("chgHadFrac4",&chgHadFrac4);
-tree->Branch("neuHadFrac4",&neuHadFrac4);
-tree->Branch("phFrac4",&phFrac4);
-tree->Branch("eleFrac4",&eleFrac4);
-tree->Branch("muFrac4",&muFrac4);
-tree->Branch("chgHadN4",&chgHadN4);
-tree->Branch("neuHadN4",&neuHadN4);
-tree->Branch("phN4",&phN4);
-tree->Branch("eleN4",&eleN4);
-tree->Branch("muN4",&muN4);
 
 tree->Branch("genJetPt",&genJetPt);
 tree->Branch("genJetPhi",&genJetPhi);
@@ -400,6 +390,8 @@ tree->Branch("genJetEta",&genJetEta);
 tree->Branch("XPt",&XPt);
 tree->Branch("XEta",&XEta);
 tree->Branch("XPhi",&XPhi);
+tree->Branch("XLifeTime",&XLifeTime);
+tree->Branch("Xlxy",&Xlxy);
 
 tree->Branch("triggers",&triggers);
 }

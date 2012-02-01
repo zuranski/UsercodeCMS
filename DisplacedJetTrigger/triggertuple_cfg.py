@@ -22,11 +22,13 @@ process.load( "SimGeneral.HepPDTESSource.pythiapdt_cfi")
 process.genParticles = cms.EDProducer("GenParticleProducer",src = cms.InputTag("generator"))
 
 process.trigtuple = cms.EDAnalyzer('TriggerTuple',
-    hltcorjets = cms.InputTag("hltCaloJetCorrected"),
-    selectedjets = cms.InputTag("hltAntiKT5L2L3CorrCaloJetsPt60Eta2"),
+    jets = cms.InputTag("hltCaloJetCorrected"),
+    l1jets = cms.InputTag("hltCaloJetL1FastJetCorrected"),
     tracks = cms.InputTag("hltDisplacedHT250RegionalCtfWithMaterialTracks"),
+    l1tracks = cms.InputTag("hltDisplacedHT250L1FastJetRegionalCtfWithMaterialTracks"),
     vertices = cms.InputTag("hltPixelVertices"),
-    pfjets = cms.InputTag("hltAntiKT5PFJets")
+    pfjets = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
+    pftracks = cms.InputTag("hltIter3Merged")
 )
 
 process.TFileService = cms.Service("TFileService",

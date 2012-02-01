@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_open_dataV47 import *
+from MyAnalysis.DisplacedJetTrigger.myhlt_open_dataV55 import *
 
 # enable the TrigReport and TimeReport
 process.options = cms.untracked.PSet(
@@ -17,10 +17,11 @@ process.source = cms.Source('PoolSource',fileNames = cms.untracked.vstring(
 process.trigtuple = cms.EDAnalyzer('TriggerTuple',
     jets = cms.InputTag("hltCaloJetCorrected"),
     l1jets = cms.InputTag("hltCaloJetL1FastJetCorrected"),
-    tracks = cms.InputTag("unused"),
-    vertices = cms.InputTag("unused"),
-    pfjets4 = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
-    pfjets1 = cms.InputTag("hltAntiKT5PFJetsTrk1IterNoMu")
+    tracks = cms.InputTag("hltDisplacedHT250RegionalCtfWithMaterialTracks"),
+    l1tracks = cms.InputTag("hltDisplacedHT250L1FastJetRegionalCtfWithMaterialTracks"),
+    vertices = cms.InputTag("hltPixelVertices"),
+    pfjets = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
+    pftracks = cms.InputTag("hltIter3Merged")
 )
 
 

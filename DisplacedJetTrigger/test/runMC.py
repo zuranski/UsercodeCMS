@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_open_mcV47 import *
+from MyAnalysis.DisplacedJetTrigger.myhlt_open_mcV55 import *
 
 # Select exotics decaying to qq or bb.
 process.filterMC = cms.EDFilter('MCParticlePairFilter',
@@ -19,16 +19,20 @@ process.load('MyAnalysis.DisplacedJetTrigger.MH_400_MFF_150_CTau400_cff')
 
 # genParticles
 process.load( "SimGeneral.HepPDTESSource.pythiapdt_cfi")
-process.genParticles = cms.EDProducer("GenParticleProducer",src = cms.InputTag("generator"))
+process.genParticles = cms.EDProducer("GenParticleProducer",
+    saveBarCodes = cms.untracked.bool(True),
+    src = cms.InputTag("generator"),
+    abortOnUnknownPDGCode = cms.untracked.bool(False))
 
 # TriggerTuple
 process.trigtuple = cms.EDAnalyzer('TriggerTuple',
     jets = cms.InputTag("hltCaloJetCorrected"),
     l1jets = cms.InputTag("hltCaloJetL1FastJetCorrected"),
-    tracks = cms.InputTag("unused"),
-    vertices = cms.InputTag("unused"),
-    pfjets4 = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
-    pfjets1 = cms.InputTag("hltAntiKT5PFJetsTrk1IterNoMu")
+    tracks = cms.InputTag("hltDisplacedHT250RegionalCtfWithMaterialTracks"),
+    l1tracks = cms.InputTag("hltDisplacedHT250L1FastJetRegionalCtfWithMaterialTracks"),
+    vertices = cms.InputTag("hltPixelVertices"),
+    pfjets = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
+    pftracks = cms.InputTag("hltIter3Merged")
 )
 
 
