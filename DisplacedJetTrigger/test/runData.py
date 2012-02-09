@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_open_dataV55 import *
+from MyAnalysis.DisplacedJetTrigger.myhlt_open_dataV4 import *
 
 # enable the TrigReport and TimeReport
 process.options = cms.untracked.PSet(
@@ -20,8 +20,8 @@ process.trigtuple = cms.EDAnalyzer('TriggerTuple',
     tracks = cms.InputTag("hltDisplacedHT250RegionalCtfWithMaterialTracks"),
     l1tracks = cms.InputTag("hltDisplacedHT250L1FastJetRegionalCtfWithMaterialTracks"),
     vertices = cms.InputTag("hltPixelVertices"),
-    pfjets = cms.InputTag("hltAntiKT5PFJetsTrk4IterNoMu"),
-    pftracks = cms.InputTag("hltIter3Merged")
+    pfjets = cms.InputTag("hltAntiKT5PFJetsPromptTracks"),
+    pftracks = cms.InputTag("hltPFMuonMergingPromptTracks")
 )
 
 
@@ -36,3 +36,6 @@ process.out = cms.EndPath(process.trigtuple)
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32( 10 )
 )
+
+import L1Trigger.Configuration.L1Trigger_custom
+process = L1Trigger.Configuration.L1Trigger_custom.customiseL1Menu(process)

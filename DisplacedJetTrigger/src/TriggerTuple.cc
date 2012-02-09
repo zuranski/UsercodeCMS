@@ -211,155 +211,172 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    edm::ESHandle<TransientTrackBuilder> builder;
    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
 
-   edm::Handle<reco::TrackCollection> tracksh;
-   iEvent.getByLabel(tracks_,tracksh);
+   try {
+     edm::Handle<reco::TrackCollection> tracksh;
+     iEvent.getByLabel(tracks_,tracksh);
 
-   edm::Handle<reco::CaloJetCollection> jetsh;
-   iEvent.getByLabel(jets_,jetsh);
+     edm::Handle<reco::CaloJetCollection> jetsh;
+     iEvent.getByLabel(jets_,jetsh);
 
-   for (reco::CaloJetCollection::const_iterator j = jetsh->begin(); j != jetsh->end(); j++) {
+     for (reco::CaloJetCollection::const_iterator j = jetsh->begin(); j != jetsh->end(); j++) {
 
-     if (j->pt() > 40 and fabs(j->eta())<3) ht+=j->et();
+       if (j->pt() > 40 and fabs(j->eta())<3) ht+=j->et();
 
-     if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
-     jet jet_;
-     jet_.energy = j->energy();
-     jet_.pt = j->pt();
-     jet_.eta = j->eta();
-     jet_.phi = j->phi();
-     std::vector<track> tracks_;
-     GlobalVector direction(j->px(), j->py(), j->pz());
+       if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
+       jet jet_;
+       jet_.energy = j->energy();
+       jet_.pt = j->pt();
+       jet_.eta = j->eta();
+       jet_.phi = j->phi();
+       std::vector<track> tracks_;
+       GlobalVector direction(j->px(), j->py(), j->pz());
      
-     for (reco::TrackCollection::const_iterator trk = tracksh->begin(); trk != tracksh->end(); trk++) {
+       for (reco::TrackCollection::const_iterator trk = tracksh->begin(); trk != tracksh->end(); trk++) {
 	
-       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
-         track track_;
+         if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+           track track_;
 
-         reco::TransientTrack transientTrack = builder->build(*trk);
-         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
-	   
-         track_.pt = trk->pt();
-         track_.eta = trk->eta();
-         track_.phi = trk->phi();
-         track_.chi2 = trk->normalizedChi2();
-         track_.nHits = trk->numberOfValidHits();
-         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
-         track_.dxy = trk->dxy(pv->position());
-         track_.dz = trk->dz(pv->position());
-	 track_.ip3d = ip3d;
-	 track_.algo = trk->algo();
+           reco::TransientTrack transientTrack = builder->build(*trk);
+           double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+           double ip3dsig = IPTools::signedImpactParameter3D(transientTrack,direction,*pv).second.significance();	         double ip2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value(); 
+           double ip2dsig = IPTools::signedTransverseImpactParameter(transientTrack,direction,*pv).second.significance();	  
 
-	 tracks_.push_back(track_);
+           track_.pt = trk->pt();
+           track_.eta = trk->eta();
+           track_.phi = trk->phi();
+           track_.chi2 = trk->normalizedChi2();
+           track_.nHits = trk->numberOfValidHits();
+           track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+           track_.dxy = ip2d;
+           track_.dxysig = ip2dsig;
+           track_.dz = trk->dz(pv->position());
+           track_.ip3d = ip3d;
+           track_.ip3dsig = ip3dsig;
+	   track_.algo = trk->algo();
+
+           tracks_.push_back(track_);
+       }
+       jet_.tracks = tracks_;
+       jets.push_back(jet_);
      }
-     jet_.tracks = tracks_;
-     jets.push_back(jet_);
-   }
-
+   } catch (...) {;} 
 
 // l1jets and their tracks
 
-   edm::Handle<reco::TrackCollection> l1tracksh;
-   iEvent.getByLabel(l1tracks_,l1tracksh);
+   try {
 
-   edm::Handle<reco::CaloJetCollection> l1jetsh;
-   iEvent.getByLabel(l1jets_,l1jetsh);
+     edm::Handle<reco::TrackCollection> l1tracksh;
+     iEvent.getByLabel(l1tracks_,l1tracksh);
 
-   for (reco::CaloJetCollection::const_iterator j = l1jetsh->begin(); j != l1jetsh->end(); j++) {
+     edm::Handle<reco::CaloJetCollection> l1jetsh;
+     iEvent.getByLabel(l1jets_,l1jetsh);
 
-     if (j->pt() > 40 and fabs(j->eta())<3) l1ht+=j->et();
+     for (reco::CaloJetCollection::const_iterator j = l1jetsh->begin(); j != l1jetsh->end(); j++) {
 
-     if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
-     jet jet_;
-     jet_.energy = j->energy();
-     jet_.pt = j->pt();
-     jet_.eta = j->eta();
-     jet_.phi = j->phi();
-     std::vector<track> tracks_;
-     GlobalVector direction(j->px(), j->py(), j->pz());
+       if (j->pt() > 40 and fabs(j->eta())<3) l1ht+=j->et();
+
+       if (j->pt() < 40 or fabs(j->eta()) > 2.) continue;
+       jet jet_;
+       jet_.energy = j->energy();
+       jet_.pt = j->pt();
+       jet_.eta = j->eta();
+       jet_.phi = j->phi();
+       std::vector<track> tracks_;
+       GlobalVector direction(j->px(), j->py(), j->pz());
      
-     for (reco::TrackCollection::const_iterator trk = l1tracksh->begin(); trk != l1tracksh->end(); trk++) {
+       for (reco::TrackCollection::const_iterator trk = l1tracksh->begin(); trk != l1tracksh->end(); trk++) {
 	
-       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
-         track track_;
+         if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+           track track_;
 
-         reco::TransientTrack transientTrack = builder->build(*trk);
-         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
-	   
-         track_.pt = trk->pt();
-         track_.eta = trk->eta();
-         track_.phi = trk->phi();
-         track_.chi2 = trk->normalizedChi2();
-         track_.nHits = trk->numberOfValidHits();
-         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
-         track_.dxy = trk->dxy(pv->position());
-         track_.dz = trk->dz(pv->position());
-	 track_.ip3d = ip3d;
-	 track_.algo = trk->algo();
+           reco::TransientTrack transientTrack = builder->build(*trk);
+           double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+           double ip3dsig = IPTools::signedImpactParameter3D(transientTrack,direction,*pv).second.significance();	         double ip2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value(); 
+           double ip2dsig = IPTools::signedTransverseImpactParameter(transientTrack,direction,*pv).second.significance();	 
 
-	 tracks_.push_back(track_);
+           track_.pt = trk->pt();
+           track_.eta = trk->eta();
+           track_.phi = trk->phi();
+           track_.chi2 = trk->normalizedChi2();
+           track_.nHits = trk->numberOfValidHits();
+           track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+           track_.dxy = ip2d;
+           track_.dxysig = ip2dsig;
+           track_.dz = trk->dz(pv->position());
+           track_.ip3d = ip3d;
+           track_.ip3dsig = ip3dsig;
+	   track_.algo = trk->algo();
+
+	   tracks_.push_back(track_);
+       }
+       jet_.tracks = tracks_;
+       l1jets.push_back(jet_);
      }
-     jet_.tracks = tracks_;
-     l1jets.push_back(jet_);
-   }
+   } catch (...) {;}
+// PF jets 
 
-// PF jets 4 Trk iteration
+   try {
+ 
+     edm::Handle<reco::TrackCollection> pftracksh;
+     iEvent.getByLabel(pftracks_,pftracksh);
 
-   edm::Handle<reco::TrackCollection> pftracksh;
-   iEvent.getByLabel(pftracks_,pftracksh);
+     edm::Handle<reco::PFJetCollection> pfjetsh;
+     iEvent.getByLabel(pfjets_,pfjetsh);
 
-   edm::Handle<reco::PFJetCollection> pfjetsh;
-   iEvent.getByLabel(pfjets_,pfjetsh);
+     for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
 
-   for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
+       if (j->pt()<40 || fabs(j->eta())>2) continue;
 
-     if (j->pt()<40 || fabs(j->eta())>2) continue;
+       pfjet pfjet_;
 
-     pfjet pfjet_;
+       pfjet_.energy = j->energy();
+       pfjet_.pt = j->pt();
+       pfjet_.eta = j->eta();
+       pfjet_.phi = j->phi();
 
-     pfjet_.energy = j->energy();
-     pfjet_.pt = j->pt();
-     pfjet_.eta = j->eta();
-     pfjet_.phi = j->phi();
+       pfjet_.chgHadFrac = j->chargedHadronEnergyFraction();
+       pfjet_.chgHadN = j->chargedHadronMultiplicity();
+       pfjet_.neuHadFrac = j->neutralHadronEnergyFraction();
+       pfjet_.neuHadN = j->neutralMultiplicity();
+       pfjet_.phFrac = j->photonEnergyFraction();
+       pfjet_.phN = j->photonMultiplicity();
+       pfjet_.eleFrac = j->electronEnergyFraction();
+       pfjet_.eleN = j->electronMultiplicity();
+       pfjet_.muFrac = j->muonEnergyFraction();
+       pfjet_.muN = j->muonMultiplicity();	
 
-     pfjet_.chgHadFrac = j->chargedHadronEnergyFraction();
-     pfjet_.chgHadN = j->chargedHadronMultiplicity();
-     pfjet_.neuHadFrac = j->neutralHadronEnergyFraction();
-     pfjet_.neuHadN = j->neutralMultiplicity();
-     pfjet_.phFrac = j->photonEnergyFraction();
-     pfjet_.phN = j->photonMultiplicity();
-     pfjet_.eleFrac = j->electronEnergyFraction();
-     pfjet_.eleN = j->electronMultiplicity();
-     pfjet_.muFrac = j->muonEnergyFraction();
-     pfjet_.muN = j->muonMultiplicity();	
-
-     std::vector<track> tracks_;
-     GlobalVector direction(j->px(), j->py(), j->pz());
+       std::vector<track> tracks_;
+       GlobalVector direction(j->px(), j->py(), j->pz());
      
-     for (reco::TrackCollection::const_iterator trk = pftracksh->begin(); trk != pftracksh->end(); trk++) {
+       for (reco::TrackCollection::const_iterator trk = pftracksh->begin(); trk != pftracksh->end(); trk++) {
 	
-       if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
-         track track_;
+         if (deltaR(j->eta(),j->phi(),trk->eta(),trk->phi())>0.5) continue;
+           track track_;
 
-         reco::TransientTrack transientTrack = builder->build(*trk);
-         double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
-	   
-         track_.pt = trk->pt();
-         track_.eta = trk->eta();
-         track_.phi = trk->phi();
-         track_.chi2 = trk->normalizedChi2();
-         track_.nHits = trk->numberOfValidHits();
-         track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
-         track_.dxy = trk->dxy(pv->position());
-         track_.dz = trk->dz(pv->position());
-	 track_.ip3d = ip3d;
-	 track_.algo = trk->algo();
+           reco::TransientTrack transientTrack = builder->build(*trk);
+           double ip3d = IPTools::signedImpactParameter3D(transientTrack, direction, *pv).second.value(); 
+           double ip3dsig = IPTools::signedImpactParameter3D(transientTrack,direction,*pv).second.significance();	         double ip2d = IPTools::signedTransverseImpactParameter(transientTrack, direction, *pv).second.value(); 
+           double ip2dsig = IPTools::signedTransverseImpactParameter(transientTrack,direction,*pv).second.significance();	 
 
-	 tracks_.push_back(track_);
+           track_.pt = trk->pt();
+           track_.eta = trk->eta();
+           track_.phi = trk->phi();
+           track_.chi2 = trk->normalizedChi2();
+           track_.nHits = trk->numberOfValidHits();
+           track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
+           track_.dxy = ip2d;
+           track_.dxysig = ip2dsig;
+           track_.dz = trk->dz(pv->position());
+           track_.ip3d = ip3d;
+           track_.ip3dsig = ip3dsig;
+           track_.algo = trk->algo();
+
+           tracks_.push_back(track_);
+       }
+       pfjet_.tracks = tracks_;
+       pfjets.push_back(pfjet_);
      }
-     pfjet_.tracks = tracks_;
-     pfjets.push_back(pfjet_);
-   }
-
+   } catch (...) {;}
 
    tree->Fill();
 
@@ -372,7 +389,7 @@ TriggerTuple::beginJob()
 {
 tree->Branch("jets",&jets);
 tree->Branch("l1jets",&l1jets);
-tree->Branch("pfjet",&pfjets);
+tree->Branch("pfjets",&pfjets);
 
 tree->Branch("l1HTT50",&l1HTT50,"l1HTT50/O");
 tree->Branch("l1HTT75",&l1HTT75,"l1HTT75/O");
