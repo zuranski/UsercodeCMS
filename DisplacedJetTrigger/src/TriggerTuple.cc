@@ -191,27 +191,28 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 // Vertices
 
-   edm::Handle<reco::VertexCollection> vertices;
-   iEvent.getByLabel(vertices_,vertices);
+   try{
+
+     edm::Handle<reco::VertexCollection> vertices;
+     iEvent.getByLabel(vertices_,vertices);
 
 
-   nPixVtx=vertices->size();
-   reco::Vertex dummy;
-   const reco::Vertex *pv = &dummy;
-   int ndof = 0;
-   for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); vtx++){
-     if (vtx->ndof() > ndof){
-       pv = &*vtx;
-       ndof = vtx->ndof();
+     nPixVtx=vertices->size();
+     reco::Vertex dummy;
+     const reco::Vertex *pv = &dummy;
+     int ndof = 0;
+     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); vtx++){
+       if (vtx->ndof() > ndof){
+         pv = &*vtx;
+         ndof = vtx->ndof();
+       }
      }
-   }
 
 // jets and their tracks
 
    edm::ESHandle<TransientTrackBuilder> builder;
    iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
 
-   try {
      edm::Handle<reco::TrackCollection> tracksh;
      iEvent.getByLabel(tracks_,tracksh);
 
@@ -259,11 +260,8 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        jet_.tracks = tracks_;
        jets.push_back(jet_);
      }
-   } catch (...) {;} 
 
 // l1jets and their tracks
-
-   try {
 
      edm::Handle<reco::TrackCollection> l1tracksh;
      iEvent.getByLabel(l1tracks_,l1tracksh);
@@ -312,11 +310,8 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        jet_.tracks = tracks_;
        l1jets.push_back(jet_);
      }
-   } catch (...) {;}
 // PF jets 
 
-   try {
- 
      edm::Handle<reco::TrackCollection> pftracksh;
      iEvent.getByLabel(pftracks_,pftracksh);
 

@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_open_mcV4 import *
+from MyAnalysis.DisplacedJetTrigger.myhlt_mcV11 import *
 
 # Select exotics decaying to qq or bb.
 process.filterMC = cms.EDFilter('MCParticlePairFilter',
