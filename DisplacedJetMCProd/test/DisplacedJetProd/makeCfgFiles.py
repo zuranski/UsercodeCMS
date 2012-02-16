@@ -18,7 +18,7 @@ for f in os.listdir('../../python'):
 	os.system(command)
 	os.system('mv HTo2* cfgFiles/')
 
-os.mkdir('crabjobs')
+os.mkdir('crab/crabjobs')
 for f in os.listdir('cfgFiles/'):
 
 	if f.endswith('pyc') : continue
@@ -37,7 +37,7 @@ for f in os.listdir('cfgFiles/'):
 
 	os.system('mv tmp cfgFiles/'+f)
 	name=f[f.find('MH'):f.find('pythia')-1]
-	os.mkdir('crabjobs/'+name)
+	os.mkdir('crab/crabjobs/'+name)
 	template = open('crab.cfg')
 	tmp = open('tmp','write')
 	for line in template:
@@ -46,5 +46,5 @@ for f in os.listdir('cfgFiles/'):
 		if line.find('publish_data_name=') > -1:
 			line='publish_data_name='+name+'GEN_SIM_RAWDEBUG\n'
 		tmp.write(line)
-	os.system('mv tmp crabjobs/'+name+'/crab.cfg')
+	os.system('mv tmp crab/crabjobs/'+name+'/crab.cfg')
 
