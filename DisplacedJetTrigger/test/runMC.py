@@ -15,7 +15,9 @@ process.options = cms.untracked.PSet(
 )
 
 # input source
-process.load('MyAnalysis.DisplacedJetTrigger.MH_400_MFF_150_CTau400_cff')
+#process.load('MyAnalysis.DisplacedJetTrigger.MH_400_MFF_150_CTau400_cff')
+process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring(
+    'file:/uscms_data/d2/zuranski/DispJetTrigger/GEN_SIM_RECODEBUG_100.root'))
 
 # genParticles
 process.load( "SimGeneral.HepPDTESSource.pythiapdt_cfi")
@@ -44,7 +46,7 @@ process.out = cms.EndPath(process.genParticles + process.trigtuple)
 
 # limit the number of events to be processed
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32( 20 )
+    input = cms.untracked.int32( -1 )
 )
 
 import L1Trigger.Configuration.L1Trigger_custom
