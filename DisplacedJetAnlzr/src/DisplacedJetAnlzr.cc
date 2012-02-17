@@ -1,21 +1,10 @@
-// -*- C++ -*-
-//
 // Package:    DisplacedJetAnlzr
 // Class:      DisplacedJetAnlzr
 // 
-/**\class DisplacedJetAnlzr DisplacedJetAnlzr.cc MyAnalysis/DisplacedJetAnlzr/src/DisplacedJetAnlzr.cc
 
- Description: [one line class summary]
-
- Implementation:
-     [Notes on implementation]
-*/
 //
 // Original Author:  Andrzej Zuranski
 //         Created:  Thu Feb 16 09:43:08 CST 2012
-// $Id$
-//
-//
 
 
 // system include files
@@ -30,12 +19,33 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+//Trigger
+#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
 
-//
-// class declaration
-//
+//File Service
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "TTree.h"
+
+//My Data Formats
+#include "MyAnalysis/DisplacedJetAnlzr/interface/exotic.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/track.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/pfjet.h"
+
+//EDM Data Formats
+#include "DataFormats/JetReco/interface/PFJet.h"
+#include "DataFormats/ParticleFlowReco/interface/PFDisplacedVertex.h"
+
+//Transient Tracks
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+
 
 class DisplacedJetAnlzr : public edm::EDAnalyzer {
    public:
@@ -56,6 +66,11 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
 
       // ----------member data ---------------------------
+      TTree *tree;
+      std::vector<std::string> triggers;
+      std::vector<exotic> Xs;
+      std::vector<genjet> gjets;
+      std::vector<pfjet> pfjets;
 };
 
 //
@@ -73,6 +88,8 @@ DisplacedJetAnlzr::DisplacedJetAnlzr(const edm::ParameterSet& iConfig)
 
 {
    //now do what ever initialization is needed
+   edm::Service<TFileService> fs;
+   tree = fs->make<TTree>("tree","tree");
 
 }
 
@@ -96,7 +113,10 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 {
    using namespace edm;
 
-   std::vector<std::string> triggers;
+// Clear variables
+   triggers.clear();Xs.clear();gjets.clear();pfjets.clear();
+
+// Triggers
 
    HLTConfigProvider hltConfig;
    bool changed;
@@ -107,12 +127,122 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    const std::vector< std::string > &trgNames = hltConfig.triggerNames();
 
    for (size_t i=0;i<hltResults->size();i++)
-	if (hltResults->accept(i))
+	if (hltResults->accept(i) && trgNames.at(i).find("DisplacedPFJet") != std::string::npos)
 	 triggers.push_back(trgNames.at(i));
 
-   for (size_t i=0;i<triggers.size();i++)
-     std::cout << triggers.at(i) << std::endl;
+   // no DisplacedPFJet trigger fired.. so sad
+   if (triggers.size() == 0 ) return;
 
+// generator information
+
+  if (!iEvent.isRealData()){
+
+  Handle<HepMCProduct> EvtHandle;
+  iEvent.getByLabel("generator",EvtHandle);
+
+  //get HepMC event
+  const HepMC::GenEvent* Evt = EvtHandle->GetEvent();
+
+    for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
+      if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Exotics found
+
+        exotic X;
+	HepMC::GenParticle *exo = *p;
+        HepMC::GenVertex *Xvtx = exo->end_vertex();
+
+        reco::Candidate::LorentzVector exop4( exo->momentum() );
+        X.pt = exop4.pt();
+        X.phi = exop4.phi();
+        X.eta = exop4.eta();
+	X.mass = exop4.mass();
+
+        for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
+	  if ((*pout)->pdg_id()>6) continue;
+	 
+	  genjet gj;
+	  HepMC::GenParticle *q = *pout;
+
+          reco::Candidate::LorentzVector qp4(q->momentum());
+          gj.pt = qp4.pt();
+	  gj.phi = qp4.phi();
+	  gj.eta = qp4.eta();
+	  reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
+	  double lxy = qx4.Pt();
+	  gj.lxy = lxy;
+	  X.lxy = lxy;
+	  X.ctau = qx4.P()*exop4.mass()/exop4.P();
+
+          gjets.push_back(gj);
+        }
+
+        Xs.push_back(X);
+      }
+
+    }
+  }
+
+// Trigger objects ... for later
+
+
+
+// PFJets
+
+   edm::Handle<reco::PFJetCollection> pfjetsh;
+   iEvent.getByLabel("ak5PFJets",pfjetsh);
+
+   edm::ESHandle<TransientTrackBuilder> theB;
+   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",theB);
+
+   for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
+
+     if (j->pt()<40 || fabs(j->eta())>2) continue;
+
+     pfjet pfj;
+
+     pfj.energy = j->energy();
+     pfj.pt = j->pt();
+     pfj.eta = j->eta();
+     pfj.phi = j->phi();
+
+     pfj.chgHadFrac = j->chargedHadronEnergyFraction();
+     pfj.chgHadN = j->chargedHadronMultiplicity();
+     pfj.neuHadFrac = j->neutralHadronEnergyFraction();
+     pfj.neuHadN = j->neutralMultiplicity();
+     pfj.phFrac = j->photonEnergyFraction();
+     pfj.phN = j->photonMultiplicity();
+     pfj.eleFrac = j->electronEnergyFraction();
+     pfj.eleN = j->electronMultiplicity();
+     pfj.muFrac = j->muonEnergyFraction();
+     pfj.muN = j->muonMultiplicity();
+
+     pfjets.push_back(pfj);
+
+     reco::TrackRefVector jtrks = j->getTrackRefs();
+     std::vector<reco::TransientTrack> goodtrks;
+     for (size_t i=0;i<jtrks.size();i++){
+	if (jtrks[i]->pt() < 1.) continue;
+	reco::Track trk = *jtrks[i].get();
+        goodtrks.push_back(theB->build(trk));
+     }
+
+     std::cout << goodtrks.size() << std::endl;
+
+   }
+
+
+// play with PF secondary vertices 
+   edm::Handle<std::vector<reco::PFDisplacedVertex> > pfvtxsh;
+   iEvent.getByLabel("particleFlowDisplacedVertex",pfvtxsh);
+
+
+   for (size_t i=0; i<pfvtxsh->size(); i++){
+     reco::PFDisplacedVertex v = pfvtxsh->at(i);
+     v.Dump();
+   }
+
+
+   tree->Fill();
+   return;
 }
 
 
@@ -120,6 +250,10 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 void 
 DisplacedJetAnlzr::beginJob()
 {
+tree->Branch("triggers",&triggers);
+tree->Branch("Xs",&Xs);
+tree->Branch("gjets",&gjets);
+tree->Branch("pfjets",&pfjets);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------

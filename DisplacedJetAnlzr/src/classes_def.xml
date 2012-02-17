@@ -1,0 +1,10 @@
+<lcgdict>
+  <class name="exotic"/>
+  <class name="std::vector<exotic>"/>
+  <class name="genjet"/>
+  <class name="std::vector<genjet>"/>
+  <class name="track"/>
+  <class name="std::vector<track>"/>
+  <class name="pfjet"/>
+  <class name="std::vector<pfjet>"/>
+</lcgdict>
