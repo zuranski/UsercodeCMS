@@ -12,6 +12,9 @@
 <use name="TrackingTools/TransientTrack"/>
 <use name="TrackingTools/Records"/>
 <use name="TrackingTools/IPTools"/>
+<use name="RecoVertex/AdaptiveVertexFit"/>
+<use name="RecoVertex/KalmanVertexFit"/>
+<use name="RecoVertex/ConfigurableVertexReco"/>
 <export>
   <lib   name="1"/>
 </export>

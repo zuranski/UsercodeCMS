@@ -4,18 +4,24 @@ process = cms.Process('hltreco')
 
 # import of standard configurations
 process.load('Configuration.StandardSequences.Services_cff')
-process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
+#process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.EventContent.EventContent_cff')
-process.load('SimGeneral.MixingModule.mixNoPU_cfi')
+#process.load('Configuration.EventContent.EventContent_cff')
+#process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.GeometryDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
-process.load('HLTrigger.Configuration.HLT_GRun_cff')
-process.load('Configuration.StandardSequences.EndOfProcess_cff')
+#process.load('HLTrigger.Configuration.HLT_GRun_cff')
+#process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
+#build transient tracks
+process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
+
 # Input source
-process.load('MyAnalysis.DisplacedJetAnlzr.MH_400_MFF_50_CTau80_cff')
+process.source = cms.Source('PoolSource',fileNames = cms.untracked.vstring(
+    '/store/mc/Fall11/QCD_Pt-15to3000_TuneZ2_Flat_7TeV_pythia6/GEN-SIM-RECO/PU_S6_START44_V9B-v1/0000/029013AC-953F-E111-891E-001A92810AC0.root'
+    )
+)
 
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(30)
@@ -25,7 +31,7 @@ process.maxEvents = cms.untracked.PSet(
 process.GlobalTag.globaltag = 'START52_V1::All'
 
 process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
-    hlttag = cms.InputTag("TriggerResults","","hltreco"),
+    hlttag = cms.InputTag("TriggerResults","","HLT"),
     vertexreco = cms.PSet(
         finder = cms.string('avr'),
         primcut = cms.double(15.0),
@@ -42,10 +48,10 @@ process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
 )
 
 process.TFileService = cms.Service("TFileService",
-    fileName = cms.string('ntuple.root')
+    fileName = cms.string('ntupleBkg.root')
 )
 
-process.tuple = cms.EndPath(process.djtuple)
+process.tuple = cms.Path(process.djtuple)
 # Schedule definition
-process.schedule = cms.Schedule(process.HLTSchedule)
-process.schedule.extend([process.tuple])
+#process.schedule = cms.Schedule(process.HLTSchedule)
+#process.schedule.extend([process.tuple])
