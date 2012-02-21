@@ -247,11 +247,13 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    if(!iEvent.isRealData()){
      Handle<edm::View<reco::Track> > trackCollectionH;
      iEvent.getByLabel("generalTracks",trackCollectionH);
-     edm::Handle<TrackingParticleCollection>  TPCollectionH ;
-     iEvent.getByLabel("mergedtruth","MergedTrackTruth",TPCollectionH);
-     ESHandle<TrackAssociatorBase> myAssociator;
-     iSetup.get<TrackAssociatorRecord>().get("TrackAssociatorByHits", myAssociator);
-     RecoToSimColl = myAssociator->associateRecoToSim(trackCollectionH,TPCollectionH,&iEvent );
+     edm::Handle<std::vector<TrackingParticle> > TPCollectionH ;
+     try{
+       iEvent.getByLabel(edm::InputTag("mergedtruth","MergedTrackTruth","HLT"),TPCollectionH);
+       ESHandle<TrackAssociatorBase> myAssociator;
+       iSetup.get<TrackAssociatorRecord>().get("TrackAssociatorByHits", myAssociator);
+       RecoToSimColl = myAssociator->associateRecoToSim(trackCollectionH,TPCollectionH,&iEvent );
+     } catch (...) {;}
    } 
 
 // BeamSpot
@@ -333,6 +335,13 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.ntracks = goodtrks.size();
 
      if(debugoutput){
+       for (size_t i=0;i<goodtrks.size();i++){
+         const reco::Track & trk = goodtrks.at(i).track();
+         double dR = deltaR(trk.eta(),trk.phi(),pfj.eta,pfj.phi);
+         double ip2d = IPTools::signedTransverseImpactParameter(goodtrks.at(i),direction,bs).second.value();
+         std::cout << trk.pt() << " " << trk.algo() << " " << ip2d << " " << dR << std::endl;
+       }
+       std::cout << "================================" << std::endl;
        for (size_t i=0;i<goodtrks.size();i++){
          const reco::Track & trk = goodtrks.at(i).track();
          double dR = deltaR(trk.eta(),trk.phi(),pfj.eta,pfj.phi);
@@ -450,13 +459,13 @@ DisplacedJetAnlzr::endRun(edm::Run const&, edm::EventSetup const&)
 }
 
 // ------------ method called when starting to processes a luminosity block  ------------
-void 
+void
 DisplacedJetAnlzr::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }
 
-// ------------ method called when ending the processing of a luminosity block  ------------
-void 
+// ------------ method called when ending to processes a luminosity block  ------------
+void
 DisplacedJetAnlzr::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
 {
 }

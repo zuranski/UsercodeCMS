@@ -24,6 +24,10 @@ process.load('MyAnalysis.DisplacedJetAnlzr.MH_400_MFF_50_CTau80_cff')
 process.load("SimTracker.TrackAssociation.TrackAssociatorByHits_cfi")
 process.TrackAssociatorByHits.Cut_RecoToSim = cms.double(0.5)
 
+#process.source = cms.Source('PoolSource',fileNames = cms.untracked.vstring(
+#    'file:/uscms_data/d2/zuranski/DispJetTrigger/reco.root'
+#    )
+#)
 process.maxEvents = cms.untracked.PSet(
     input = cms.untracked.int32(20)
 )
