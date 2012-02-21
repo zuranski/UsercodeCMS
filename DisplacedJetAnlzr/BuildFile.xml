@@ -15,6 +15,7 @@
 <use name="RecoVertex/AdaptiveVertexFit"/>
 <use name="RecoVertex/KalmanVertexFit"/>
 <use name="RecoVertex/ConfigurableVertexReco"/>
+<use name="SimTracker/Records"/>
 <export>
   <lib   name="1"/>
 </export>

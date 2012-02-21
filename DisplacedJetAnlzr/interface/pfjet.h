@@ -2,7 +2,6 @@
 #define MyAnalysis_DisplacedJetAnlzr_pfjet_h
 
 #include <vector>
-#include "FWCore/Utilities/interface/typedefs.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/track.h"
 
 struct pfjet {
@@ -10,7 +9,7 @@ struct pfjet {
    double energy,pt,eta,phi;
    double phFrac,neuHadFrac,chgHadFrac,eleFrac,muFrac;
    int phN,neuHadN,chgHadN,eleN,muN;
-   double lxy,lxysig, vtxmass, vtxchi2;
+   double lxy,lxysig,vtxmass,vtxpt,vtxchi2;
    int ntracks;
    std::vector<track> tracks;
 
