@@ -289,8 +289,12 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      GlobalVector direction(j->px(), j->py(), j->pz());
 
      reco::TrackRefVector jtrks = j->getTrackRefs();
-     std::vector<reco::TransientTrack> goodtrks;
+     std::vector<reco::TransientTrack> disptrks;
      std::vector<track> tracks_;
+
+     // a la HLT variables:
+     int nPromptTracks = 0;
+     double PromptEnergy = 0.;
 
      // track selection before vertexing
 
@@ -302,6 +306,18 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         if (jtrks[i]->normalizedChi2() > 10) continue;
         if (jtrks[i]->numberOfValidHits() < 5) continue;
 
+        reco::TransientTrack t_trk = theB->build(*jtrks[i].get());
+        Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,bs).second;
+        Measurement1D ip3d = IPTools::signedImpactParameter3D(t_trk,direction,pv).second;
+
+        if (fabs(ip3d.value())<0.03) 
+          nPromptTracks += 1; 
+        
+        if (fabs(ip2d.value())<0.05) {
+          PromptEnergy += sqrt(0.1396*0.1396 + trk->p()*trk->p());
+          continue;
+        }
+	
         track track_;
 
         track_.pt = trk->pt();
@@ -312,18 +328,12 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	track_.nPixHits = trk->hitPattern().numberOfValidPixelHits();
 	track_.algo = trk->algo();
 
-        reco::TransientTrack t_trk = theB->build(*jtrks[i].get());
-        Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,pv).second;
-        Measurement1D ip3d = IPTools::signedImpactParameter3D(t_trk,direction,pv).second;
-
 	track_.ip2d = ip2d.value();
 	track_.ip2dsig = ip2d.significance();
 	track_.ip3d = ip3d.value();
 	track_.ip3dsig = ip3d.significance();
 	track_.vtxweight = -1;
 
-        if (fabs(ip2d.value())<0.0) continue;
-	
         edm::RefToBase<reco::Track> ref_trk(jtrks[i]); 
         if(RecoToSimColl.find(ref_trk) != RecoToSimColl.end()){
           TrackingParticleRef tp = RecoToSimColl[ref_trk].begin()->first;
@@ -341,23 +351,28 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
 
         tracks_.push_back(track_);
-        goodtrks.push_back(t_trk);
+        disptrks.push_back(t_trk);
      }
 
+     // a la HLT variables
+     pfj.nPrompt = nPromptTracks;
+     pfj.PromptEnergyFrac = PromptEnergy/pfj.energy;
+     pfj.nDispTracks = disptrks.size();
+
+     // unless Vtx failes..  
      pfj.vtxchi2 = -1;
      pfj.vtxmass = -1;
      pfj.vtxpt = -1;
      pfj.lxy = -1;
      pfj.lxysig = -1;
-     pfj.ntracks = goodtrks.size();
 
-     if (goodtrks.size()>1){
+     if (disptrks.size()>1){
        
-       double maxshift =0.0005;
+       double maxshift =0.0001;
        unsigned int maxstep = 30;
        double maxlpshift = 0.1;
        double weightThreshold = 0.5;
-       double sigmacut = 10.;
+       double sigmacut = 5.;
        double Tini = 256.;
        double ratio = 0.25;
        static AdaptiveVertexFitter avf(
@@ -368,7 +383,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          KalmanVertexSmoother() );
        avf.setParameters ( maxshift, maxlpshift, maxstep, weightThreshold );
     
-       TransientVertex jvtx = avf.vertex(goodtrks);
+       TransientVertex jvtx = avf.vertex(disptrks);
 
        if (jvtx.isValid()){
 
@@ -381,8 +396,8 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	 double sig = lxy/err;
 
          ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p4TrkSum;
-	 for (size_t i=0;i<goodtrks.size();i++){
-	   reco::TransientTrack t_trk = goodtrks.at(i);
+	 for (size_t i=0;i<disptrks.size();i++){
+	   reco::TransientTrack t_trk = disptrks.at(i);
            GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
 
            // update track parameters after succesful vtx fit
@@ -390,6 +405,15 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   tracks_.at(i).eta = p3.eta();
 	   tracks_.at(i).phi = p3.phi();
 	   tracks_.at(i).vtxweight = jvtx.trackWeight(t_trk);
+
+	   if (debugoutput){
+             track track_ = tracks_.at(i);
+             std::cout << "track pt: " << track_.pt \
+             << " algo: " << track_.algo \
+             << " ip2d: " << track_.ip2d \
+             << " vtxw: " << track_.vtxweight \
+             << " lxy:  " << track_.lxy << std::endl;
+        }
 
 	   p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
          }
@@ -406,7 +430,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     	   << " vtxmass: " << pfj.vtxmass \
  	   << " lxy: " << lxy \
 	   << " sig: " << sig \
-	   << " ntrks: " << pfj.ntracks << std::endl;
+	   << " ntrks: " << pfj.nDispTracks << std::endl;
          }
        } else {
          if (debugoutput)
@@ -414,7 +438,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
        }
      }
 
-     pfj.tracks = tracks_;
+     pfj.disptracks = tracks_;
      pfjets.push_back(pfj);
 
    }
