@@ -29,7 +29,7 @@ process.TrackAssociatorByHits.Cut_RecoToSim = cms.double(0.5)
 #    )
 #)
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(20)
+    input = cms.untracked.int32(2000)
 )
 
 # Other statements
@@ -37,6 +37,7 @@ process.GlobalTag.globaltag = 'START52_V1::All'
 
 process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
     debugoutput = cms.bool(False),
+    useTP = cms.bool(False),
     hlttag = cms.InputTag("TriggerResults","","HLT"),
     vertexreco = cms.PSet(
         finder = cms.string('avr'),

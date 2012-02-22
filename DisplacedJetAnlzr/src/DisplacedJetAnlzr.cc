@@ -84,7 +84,7 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
 
       edm::ParameterSet vtxconfig_;
       edm::InputTag hlttag_;
-      bool debugoutput;
+      bool debugoutput,useTP;
       ConfigurableVertexReconstructor vtxmaker_;
       reco::RecoToSimCollection RecoToSimColl;
 
@@ -111,6 +111,7 @@ DisplacedJetAnlzr::DisplacedJetAnlzr(const edm::ParameterSet& iConfig) :
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexreco")),
 hlttag_(iConfig.getParameter<edm::InputTag>("hlttag")),
 debugoutput(iConfig.getParameter<bool>("debugoutput")),
+useTP(iConfig.getParameter<bool>("useTP")),
 vtxmaker_(vtxconfig_) {
    //now do what ever initialization is needed
    edm::Service<TFileService> fs;
@@ -220,7 +221,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
 // Reco to Sim Track association
 
-   if(!iEvent.isRealData()){
+   if(!iEvent.isRealData() && useTP){
      Handle<edm::View<reco::Track> > trackCollectionH;
      iEvent.getByLabel("generalTracks",trackCollectionH);
      edm::Handle<std::vector<TrackingParticle> > TPCollectionH ;
@@ -321,7 +322,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	track_.ip3dsig = ip3d.significance();
 	track_.vtxweight = -1;
 
-        if (fabs(ip2d.value())<0.05) continue;
+        if (fabs(ip2d.value())<0.0) continue;
 	
         edm::RefToBase<reco::Track> ref_trk(jtrks[i]); 
         if(RecoToSimColl.find(ref_trk) != RecoToSimColl.end()){
