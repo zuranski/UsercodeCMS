@@ -18,7 +18,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
 
 # Input source
-process.load('MyAnalysis.DisplacedJetAnlzr.MH_400_MFF_50_CTau80_cff')
+process.load('MyAnalysis.DisplacedJetAnlzr.MH_400_MFF_150_CTau400_cff')
 
 # Track MC match
 process.load("SimTracker.TrackAssociation.TrackAssociatorByHits_cfi")
@@ -36,7 +36,7 @@ process.maxEvents = cms.untracked.PSet(
 process.GlobalTag.globaltag = 'START52_V1::All'
 
 process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
-    debugoutput = cms.bool(True),
+    debugoutput = cms.bool(False),
     hlttag = cms.InputTag("TriggerResults","","HLT"),
     vertexreco = cms.PSet(
         finder = cms.string('avr'),

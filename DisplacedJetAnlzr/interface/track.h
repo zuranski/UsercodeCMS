@@ -3,7 +3,7 @@
 
 struct track {
 
-   double pt,eta,phi,chi2,dxy,dz,ip3d,dxysig,ip3dsig;
+   double pt,eta,phi,chi2,ip2d,ip3d,ip2dsig,ip3dsig,lxy,vtxweight;
    int nHits,nPixHits,algo;
 
 };
