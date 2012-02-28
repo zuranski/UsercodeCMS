@@ -25,6 +25,7 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
 //File Service
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -36,6 +37,7 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/track.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/pfjet.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/trgObj.h"
 
 //EDM Data Formats
 #include "DataFormats/JetReco/interface/PFJet.h"
@@ -94,6 +96,8 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
       std::vector<exotic> Xs;
       std::vector<genjet> gjets;
       std::vector<pfjet> pfjets;
+      std::vector<trgObj> trg1Objs;
+      std::vector<trgObj> trg2Objs;
 };
 
 //
@@ -140,7 +144,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    using namespace edm;
 
 // Clear variables
-   triggers.clear();Xs.clear();gjets.clear();pfjets.clear();
+   triggers.clear();Xs.clear();gjets.clear();pfjets.clear();trg1Objs.clear();trg2Objs.clear();
 
 // Triggers
 
@@ -154,8 +158,9 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    const std::vector< std::string > &trgNames = hltConfig.triggerNames();
 
    for (size_t i=0;i<hltResults->size();i++)
-	if (hltResults->accept(i) && trgNames.at(i).find("DisplacedPFJet") != std::string::npos)
-	 triggers.push_back(trgNames.at(i));
+	if (hltResults->accept(i) && trgNames.at(i).find("DisplacedPFJet") != std::string::npos) {
+	  triggers.push_back(trgNames.at(i));
+        }
 
    // no DisplacedPFJet trigger fired.. so sad
    //if (triggers.size() == 0 ) return;
@@ -199,11 +204,11 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	  X.lxy = lxy;
 	  X.ctau = qx4.P()*exop4.mass()/exop4.P();
 
+          if (debugoutput)
+       	    std::cout << "Lxy: " << gj.lxy/10. << " pt: " << gj.pt << " eta: " << gj.eta << " phi: " << gj.phi << std::endl;
+
           gjets.push_back(gj);
         }
-
-	if (debugoutput)
-	  std::cout << X.lxy/10. << std::endl;
 
         Xs.push_back(X);
       }
@@ -212,7 +217,61 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
   }
 
 
-// Trigger objects ... for later
+// Trigger objects 
+
+   edm::Handle<trigger::TriggerEvent> triggerEvent;
+   iEvent.getByLabel(edm::InputTag("hltTriggerSummaryAOD","",hlttag_.process()) ,triggerEvent);
+
+   if ( triggerEvent.isValid() ){
+
+    const trigger::TriggerObjectCollection & triggerObjects = triggerEvent -> getObjects();
+    trigger::size_type filter1_idx = triggerEvent -> filterIndex (edm::InputTag("hlt1DisplacedHT250L1FastJetL3Filter","",hlttag_.process()) ) ;   
+    trigger::size_type filter2_idx = triggerEvent -> filterIndex (edm::InputTag("hlt1PFDisplacedJetsPt50","",hlttag_.process()) ) ;   
+    trigger::size_type n_filters    = triggerEvent -> sizeFilters();
+
+    if ( filter1_idx < n_filters ) {
+      const trigger::Keys & triggerKeys ( triggerEvent -> filterKeys ( filter1_idx ) );
+      const int nkeys = triggerKeys.size();
+
+      for (int ikey = 0; ikey < nkeys; ++ikey ) {
+	const trigger::TriggerObject& tO = triggerObjects[ triggerKeys [ ikey ] ];
+
+	trgObj tO_;
+	tO_.pt = tO.pt();
+        tO_.eta = tO.eta();
+        tO_.phi = tO.phi();
+        tO_.energy = tO.energy();
+        tO_.id = tO.id();
+
+	trg1Objs.push_back(tO_);
+
+        if (debugoutput){
+          std::cout << "trigger 1 Object: " <<  tO.pt() << " eta: " << tO.eta() << " phi: "<< tO.phi() << std::endl;
+        }
+      }
+    }
+    if ( filter2_idx < n_filters ) {
+      const trigger::Keys & triggerKeys ( triggerEvent -> filterKeys ( filter2_idx ) );
+      const int nkeys = triggerKeys.size();
+
+      for (int ikey = 0; ikey < nkeys; ++ikey ) {
+	const trigger::TriggerObject& tO = triggerObjects[ triggerKeys [ ikey ] ];
+
+	trgObj tO_;
+	tO_.pt = tO.pt();
+        tO_.eta = tO.eta();
+        tO_.phi = tO.phi();
+        tO_.energy = tO.energy();
+        tO_.id = tO.id();
+
+	trg2Objs.push_back(tO_);
+
+        if (debugoutput){
+          std::cout << "trigger 2 Object: " <<  tO.pt() << " eta: " << tO.eta() << " phi: "<< tO.phi() << std::endl;
+        }
+      }
+    }
+  }
 
 // TransientTrack Builder
 
@@ -307,7 +366,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         if (jtrks[i]->numberOfValidHits() < 5) continue;
 
         reco::TransientTrack t_trk = theB->build(*jtrks[i].get());
-        Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,bs).second;
+        Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,pv).second;
         Measurement1D ip3d = IPTools::signedImpactParameter3D(t_trk,direction,pv).second;
 
         if (fabs(ip3d.value())<0.03) 
@@ -338,7 +397,8 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         if(RecoToSimColl.find(ref_trk) != RecoToSimColl.end()){
           TrackingParticleRef tp = RecoToSimColl[ref_trk].begin()->first;
           const TrackingVertex  *tv = tp->parentVertex().get();
-          track_.lxy = tv->position().pt();
+	  ROOT::Math::SVector<double,3> vector(tv->position().x() - pv.x(),tv->position().y()-pv.y(),0);
+          track_.lxy = ROOT::Math::Mag(vector); 
         } else {
           track_.lxy = -1;
         }
@@ -425,19 +485,20 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          pfj.lxy = lxy;
 	 pfj.lxysig = sig;
 
-	 if (debugoutput){
-           std::cout << "chi2: " << pfj.vtxchi2 \
-    	   << " vtxmass: " << pfj.vtxmass \
- 	   << " lxy: " << lxy \
-	   << " sig: " << sig \
-	   << " ntrks: " << pfj.nDispTracks << std::endl;
-         }
        } else {
          if (debugoutput)
            std::cout << "Vertex Fit Failed!!" << std::endl;
        }
      }
 
+     if (debugoutput){
+       std::cout << "chi2: " << pfj.vtxchi2 
+       << " vtxmass: " << pfj.vtxmass 
+       << " lxy: " << pfj.lxy 
+       << " sig: " << pfj.lxysig 
+       << " promptEfrac " << pfj.PromptEnergyFrac  
+       << " ntrks: " << pfj.nDispTracks << std::endl;
+     }
      pfj.disptracks = tracks_;
      pfjets.push_back(pfj);
 
@@ -456,6 +517,8 @@ tree->Branch("triggers",&triggers);
 tree->Branch("Xs",&Xs);
 tree->Branch("gjets",&gjets);
 tree->Branch("pfjets",&pfjets);
+tree->Branch("trg1Objs",&trg1Objs);
+tree->Branch("trg2Objs",&trg2Objs);
 }
 
 // ------------ method called once each job just after ending the event loop  ------------

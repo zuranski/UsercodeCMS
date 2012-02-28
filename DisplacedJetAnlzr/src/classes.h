@@ -1,6 +1,7 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/pfjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/exotic.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/trgObj.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
 namespace {
@@ -14,6 +15,8 @@ namespace {
     edm::Wrapper<std::vector<track> > trks;
     edm::Wrapper<pfjet> pfj;
     edm::Wrapper<std::vector<pfjet> > pfjets;
+    edm::Wrapper<trgObj> t0;
+    edm::Wrapper<std::vector<trgObj> > t0s;
   };
 
 }

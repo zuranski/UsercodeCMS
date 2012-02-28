@@ -7,4 +7,6 @@
   <class name="std::vector<track>"/>
   <class name="pfjet"/>
   <class name="std::vector<pfjet>"/>
+  <class name="trgObj"/>
+  <class name="std::vector<trgObj>"/>
 </lcgdict>
