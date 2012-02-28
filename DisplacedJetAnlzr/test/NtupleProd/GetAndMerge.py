@@ -1,22 +1,23 @@
 import os,sys
 
-cmssw_dir = os.environ['CMSSW_BASE'] + '/src'
+print "Usage: python GetAndMerge.py datasetfile"
+
+datasetfile = sys.argv[1]
 curr_dir = os.getcwd()
 
-#get list of samples
-samples = []
-for f in os.listdir(cmssw_dir+'/MyAnalysis/DisplacedJetAnlzr/python/'):
-        if f.find("MH_")==-1 : continue
-        if f.endswith('pyc') : continue
-	name=f[f.find('MH'):f.find('cff')-1]
-	samples.append(name)
+# get list of datasets
+datasets = open(datasetfile).readlines()
+datasets = [line.strip() for line in datasets]
+datasets.sort()
 
 # make directory for ntuples
 os.mkdir('ntuples')
 
 # get output and merge for each sample
 
-for sample in samples:
+for dataset in datasets:
+
+	sample = dataset[1:dataset.find('7TeV')-1]
 	os.chdir('crab/'+sample)
 	os.system('crab -status -getoutput')
 	crabdir=''

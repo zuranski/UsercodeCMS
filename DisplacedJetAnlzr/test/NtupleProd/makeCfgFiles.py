@@ -1,42 +1,33 @@
 import os,sys
 
-print "Usage: python makeCfgFiles.py"
+print "Usage: python makeCfgFiles.py datasetfile pycfgfile crabtemplate"
 
-cmssw_dir = os.environ['CMSSW_BASE'] + '/src'
+datasetfile = sys.argv[1]
+pycfgfile = sys.argv[2]
+crabfile = sys.argv[3]
+
 curr_dir = os.getcwd()
 
-#get list of samples
-samples = []
-for f in os.listdir(cmssw_dir+'/MyAnalysis/DisplacedJetAnlzr/python/'):
-        if f.find("MH_")==-1 : continue
-        if f.endswith('pyc') : continue
-	name=f[f.find('MH'):f.find('cff')-1]
-	samples.append(name)
-
 # get list of datasets
-datasets = open('datasets.txt').readlines()
+datasets = open(datasetfile).readlines()
 datasets = [line.strip() for line in datasets]
-
-samples.sort()
 datasets.sort()
 
-# prepare CMS cfg filenames
-cfgfilename = 'runSig.py'
-
 # prepare main cfg file
-cfgfile = open('../'+cfgfilename).read()
+cfgfile = open('../'+pycfgfile).read()
 
 # loop over samples and submit to crab
-for sample,dataset in zip(samples,datasets):
+for dataset in datasets:
 
+	sample = dataset[1:dataset.find('7TeV')-1]
 	os.mkdir('crab/'+sample)
-	template = open('crab.cfg')
+	template = open(crabfile)
 	tmpcfg = open('tmpcfg','write')
 	for line in template:
 		if line.find('datasetpath') > -1:
 			line = 'datasetpath='+dataset+'\n'	
 		if line.find('pset')>-1:
-			line = 'pset='+cfgfilename+'\n'
+			line = 'pset='+pycfgfile+'\n'
 		if line.find('output_file')>-1:
 			line = 'output_file='+sample+'.root'+'\n'
 		tmpcfg.write(line)
@@ -44,7 +35,7 @@ for sample,dataset in zip(samples,datasets):
 	os.system('mv tmpcfg crab/'+sample+'/crab.cfg')
 	import re
 	cfgfile=re.sub('fileName.*root','fileName = cms.string(\''+sample+'.root',cfgfile,re.DOTALL)
-	f = open('crab/'+sample+'/'+cfgfilename,'w')
+	f = open('crab/'+sample+'/'+pycfgfile,'w')
 	f.write(cfgfile)
 	f.close()
 
