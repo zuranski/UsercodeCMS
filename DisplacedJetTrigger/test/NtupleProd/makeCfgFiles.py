@@ -1,10 +1,9 @@
 import os,sys
 
-print "Usage: python makeCfgFiles.py Trig_Version isOpen isMC"
+print "Usage: python makeCfgFiles.py Trig_Version isOpen"
 
 version = sys.argv[1]
 isOpen = int(sys.argv[2])
-isMC = int(sys.argv[3])
 
 cmssw_dir = os.environ['CMSSW_BASE'] + '/src'
 curr_dir = os.getcwd()
@@ -25,8 +24,8 @@ samples.sort()
 datasets.sort()
 
 # prepare CMS cfg filenames
-cfgfilename = 'runMC.py' if isMC else 'runData.py'
-trigfilename = 'myhlt_'+('open_' if isOpen else '')+('mc' if isMC else 'data')+'V'+version+'.py'
+cfgfilename = 'runMC.py' 
+trigfilename = 'myhlt_'+('open_' if isOpen else '')+'mcV'+version+'.py'
 if not os.path.isfile('../../python/'+trigfilename):
 	print 'No Trigger File'
 	sys.exit()
@@ -59,5 +58,5 @@ for sample,dataset in zip(samples,datasets):
 
 	# create and submit crab jobs
 	os.chdir('crab/'+sample)
-	os.system('crab -create -submit')
+	#os.system('crab -create -submit')
 	os.chdir(curr_dir)

@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_dataV11 import *
+from MyAnalysis.DisplacedJetTrigger.myhlt_dataV9 import *
 
 # enable the TrigReport and TimeReport
 process.options = cms.untracked.PSet(
@@ -32,10 +32,7 @@ process.TFileService = cms.Service("TFileService",
 process.out = cms.EndPath(process.trigtuple)
 
 # limit the number of events to be processed
-#process.source.skipEvents = cms.untracked.uint32(10000)
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32( 20 )
+    input = cms.untracked.int32( 2000 )
 )
 
-import L1Trigger.Configuration.L1Trigger_custom
-process = L1Trigger.Configuration.L1Trigger_custom.customiseL1Menu(process)

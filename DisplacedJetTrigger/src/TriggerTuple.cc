@@ -22,12 +22,6 @@
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 
-#include "SimDataFormats/Track/interface/SimTrack.h"
-#include "SimDataFormats/Track/interface/SimTrackContainer.h"
-#include "SimDataFormats/Vertex/interface/SimVertex.h"
-#include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
-
-
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 #include "TrackingTools/IPTools/interface/IPTools.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
@@ -66,8 +60,21 @@ class TriggerTuple : public edm::EDAnalyzer {
       virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
 
+      void ClearVariables();
+      void GetGenInfo(const edm::Event&);
+      void GetTriggerInfo(const edm::Event&, const edm::EventSetup&);
+      void GetVertex(const edm::Event&);      
+      void GetCaloJets(const edm::Event&);
+      void GetL1FastJets(const edm::Event&);
+      void GetPFJets(const edm::Event&);
+
       // ----------member data ---------------------------
 
+      // edm objects used across functions
+      const reco::Vertex *pv;
+      edm::ESHandle<TransientTrackBuilder> builder;
+
+      // ntuple data
       TTree* tree;
       bool l1HTT50,l1HTT75,l1HTT100,l1HTT150;
       double ht,l1ht;
@@ -77,6 +84,8 @@ class TriggerTuple : public edm::EDAnalyzer {
       std::vector<pfjet> pfjets;
       std::vector<double> genJetPt,genJetEta,genJetPhi,XPt,XEta,XPhi,XLifeTime,Xlxy;
       std::vector<std::string> triggers; 
+
+      // input tags
       edm::InputTag jets_,l1jets_,vertices_,tracks_,l1tracks_,pfjets_,pftracks_;
 };
 
@@ -113,9 +122,25 @@ TriggerTuple::~TriggerTuple()
 void
 TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-   using namespace edm;
+   // analyzer steps
+   ClearVariables();
+   GetGenInfo(iEvent);
+   GetTriggerInfo(iEvent,iSetup);
+   GetVertex(iEvent);
 
-// clear variables
+   // do it here
+   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+   
+   GetCaloJets(iEvent);
+   GetL1FastJets(iEvent);
+   GetPFJets(iEvent);
+
+   tree->Fill();
+
+}
+
+void TriggerTuple::ClearVariables(){
+
    l1HTT50=0;l1HTT75=0;l1HTT100=0;l1HTT150=0;
    ht = 0; l1ht = 0; nPixVtx=0;
    jets.clear(); pfjets.clear(); l1jets.clear();
@@ -123,11 +148,13 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
    XPt.clear();XEta.clear();XPhi.clear();XLifeTime.clear();Xlxy.clear();
    triggers.clear();
 
-// generator information
+}
 
-  if (!iEvent.isRealData()){
+void TriggerTuple::GetGenInfo(const edm::Event& iEvent){
 
-  Handle<HepMCProduct> EvtHandle;
+  if (iEvent.isRealData()) return;
+
+  edm::Handle<edm::HepMCProduct> EvtHandle;
   iEvent.getByLabel("generator",EvtHandle);
 
   //get HepMC event
@@ -161,7 +188,9 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
       }
 
     }
-  }
+}
+
+void TriggerTuple::GetTriggerInfo(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 
 // L1 HT bits
 
@@ -189,7 +218,12 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 	if (hltResults->accept(i))
 	 triggers.push_back(trgNames.at(i));
 
-// Vertices
+}
+
+void TriggerTuple::GetVertex(const edm::Event& iEvent){
+
+   reco::Vertex dummy;
+   pv = &dummy;
 
    try{
 
@@ -198,8 +232,6 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 
      nPixVtx=vertices->size();
-     reco::Vertex dummy;
-     const reco::Vertex *pv = &dummy;
      int ndof = 0;
      for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx != vertices->end(); vtx++){
        if (vtx->ndof() > ndof){
@@ -207,11 +239,13 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
          ndof = vtx->ndof();
        }
      }
+   } catch (...) {;}
 
-// jets and their tracks
+}
 
-   edm::ESHandle<TransientTrackBuilder> builder;
-   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+void TriggerTuple::GetCaloJets(const edm::Event& iEvent){  
+ 
+   try{
 
      edm::Handle<reco::TrackCollection> tracksh;
      iEvent.getByLabel(tracks_,tracksh);
@@ -260,8 +294,12 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        jet_.tracks = tracks_;
        jets.push_back(jet_);
      }
+   } catch (...) {;}
+}
 
-// l1jets and their tracks
+void TriggerTuple::GetL1FastJets(const edm::Event& iEvent){
+
+   try{
 
      edm::Handle<reco::TrackCollection> l1tracksh;
      iEvent.getByLabel(l1tracks_,l1tracksh);
@@ -310,7 +348,13 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
        jet_.tracks = tracks_;
        l1jets.push_back(jet_);
      }
-// PF jets 
+   } catch (...) {;}
+
+}
+
+void TriggerTuple::GetPFJets(const edm::Event& iEvent){
+
+   try{
 
      edm::Handle<reco::TrackCollection> pftracksh;
      iEvent.getByLabel(pftracks_,pftracksh);
@@ -373,8 +417,6 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
      }
    } catch (...) {;}
 
-   tree->Fill();
-
 }
 
 
@@ -382,6 +424,9 @@ TriggerTuple::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 void 
 TriggerTuple::beginJob()
 {
+
+// define branches
+
 tree->Branch("jets",&jets);
 tree->Branch("l1jets",&l1jets);
 tree->Branch("pfjets",&pfjets);
