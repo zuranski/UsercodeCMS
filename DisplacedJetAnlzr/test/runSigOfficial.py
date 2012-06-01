@@ -23,7 +23,7 @@ process.source = cms.Source('PoolSource',fileNames = cms.untracked.vstring(
     )
 )
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(20)
+    input = cms.untracked.int32(100)
 )
 
 
@@ -49,18 +49,13 @@ process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
     debugoutput = cms.bool(True),
     useTP = cms.bool(True),
     hlttag = cms.InputTag("TriggerResults","","HLT"),
-    vertexreco = cms.PSet(
-        finder = cms.string('avr'),
-        primcut = cms.double(15.0),
-        primT = cms.double(256.0),
-        primr = cms.double(0.25),
-        seccut = cms.double(15.0),
-        secT = cms.double(256.0),
-        secr = cms.double(0.25),
-        minweight = cms.double(0.5),
-        weightthreshold = cms.double(0.1 ),
-        smoothing = cms.bool(True)
-
+    vertexfitter = cms.PSet(
+        fitter = cms.string('avf'),
+        sigmacut = cms.double(10.0),
+        Tini = cms.double(256.0),
+        ratio = cms.double(0.25),
+        maxDistance = cms.double(0.001),
+        maxNbrOfIteration = cms.int32(30)
     )
 )
 

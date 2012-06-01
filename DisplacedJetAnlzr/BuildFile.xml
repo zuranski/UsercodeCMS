@@ -16,6 +16,8 @@
 <use name="RecoVertex/KalmanVertexFit"/>
 <use name="RecoVertex/ConfigurableVertexReco"/>
 <use name="SimTracker/Records"/>
+<use name="CondFormats/DataRecord"/>
+<flags   CXXFLAGS="-g"/>
 <export>
   <lib   name="1"/>
 </export>

@@ -9,6 +9,7 @@
 
 // system include files
 #include <memory>
+#include <bitset>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -37,11 +38,14 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/track.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/pfjet.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/pfjetpair.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/trgObj.h"
 
 //EDM Data Formats
 #include "DataFormats/JetReco/interface/PFJet.h"
 #include "DataFormats/ParticleFlowReco/interface/PFDisplacedVertex.h"
+#include "DataFormats/JetReco/interface/CaloJetCollection.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 
 //Transient Tracks
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
@@ -52,7 +56,7 @@
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexSmoother.h"
 #include "RecoVertex/AdaptiveVertexFit/interface/AdaptiveVertexFitter.h"
-#include "RecoVertex/ConfigurableVertexReco/interface/ConfigurableVertexReconstructor.h"
+#include "RecoVertex/ConfigurableVertexReco/interface/ConfigurableVertexFitter.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 
@@ -60,7 +64,6 @@
 #include "SimDataFormats/TrackingAnalysis/interface/TrackingParticle.h"
 #include "SimTracker/TrackAssociation/interface/TrackAssociatorBase.h"
 #include "SimTracker/Records/interface/TrackAssociatorRecord.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 // Other
 #include "DataFormats/Math/interface/deltaR.h"
@@ -82,20 +85,31 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
       virtual void endRun(edm::Run const&, edm::EventSetup const&);
       virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
-
+      void GetMothers(const HepMC::GenParticle *p, std::vector<std::pair<int,double> > &moms);
 
       edm::ParameterSet vtxconfig_;
       edm::InputTag hlttag_;
       bool debugoutput,useTP;
-      ConfigurableVertexReconstructor vtxmaker_;
+      ConfigurableVertexFitter vtxfitter_;
       reco::RecoToSimCollection RecoToSimColl;
 
       // ----------member data ---------------------------
       TTree *tree;
-      std::vector<std::string> triggers;
+      int run,event,lumi;
+      bool trigHT,trigHTdj,trigHTdjpt;
+
+      int nPV,nTrks;
+
+      // Single Jet Quantities
+      std::vector<float> jpt;
+      std::vector<float> jeta;
+      std::vector<float> jphi;
+      std::vector<float> jmass;
+
       std::vector<exotic> Xs;
       std::vector<genjet> gjets;
       std::vector<pfjet> pfjets;
+      std::vector<pfjetpair> pfjetpairs;
       std::vector<trgObj> trg1Objs;
       std::vector<trgObj> trg2Objs;
 };
@@ -112,11 +126,11 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
 // constructors and destructor
 //
 DisplacedJetAnlzr::DisplacedJetAnlzr(const edm::ParameterSet& iConfig) : 
-vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexreco")),
+vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 hlttag_(iConfig.getParameter<edm::InputTag>("hlttag")),
 debugoutput(iConfig.getParameter<bool>("debugoutput")),
 useTP(iConfig.getParameter<bool>("useTP")),
-vtxmaker_(vtxconfig_) {
+vtxfitter_(vtxconfig_) {
    //now do what ever initialization is needed
    edm::Service<TFileService> fs;
    tree = fs->make<TTree>("tree","tree");
@@ -144,10 +158,18 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    using namespace edm;
 
 // Clear variables
-   triggers.clear();Xs.clear();gjets.clear();pfjets.clear();trg1Objs.clear();trg2Objs.clear();
+   trigHT=false,trigHTdj=false,trigHTdjpt=false;
+   nPV = 0; nTrks = 0;
+   jpt.clear();jeta.clear();jphi.clear();jmass.clear();
+
+   Xs.clear();gjets.clear();pfjets.clear();pfjetpairs.clear();trg1Objs.clear();trg2Objs.clear();
+
+// Run/Event/Lumi
+   run = iEvent.id().run();
+   event = iEvent.id().event();
+   lumi = iEvent.luminosityBlock();
 
 // Triggers
-
 
    HLTConfigProvider hltConfig;
    bool changed;
@@ -155,68 +177,45 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    edm::Handle<edm::TriggerResults> hltResults;
    iEvent.getByLabel(hlttag_,hltResults);
-   const std::vector< std::string > &trgNames = hltConfig.triggerNames();
+   const std::vector< std::string > &trigNames = hltConfig.triggerNames();
 
-   for (size_t i=0;i<hltResults->size();i++)
-	if (hltResults->accept(i) && trgNames.at(i).find("DisplacedPFJet") != std::string::npos) {
-	  triggers.push_back(trgNames.at(i));
-        }
+   std::string mytrigNames[3] = {"HLT_HT250_v","HLT_HT250_DoubleDisplacedJet60_v","HLT_HT250_DoubleDisplacedJet60_PromptTrack_v"};
 
-   // no DisplacedPFJet trigger fired.. so sad
-   //if (triggers.size() == 0 ) return;
+   for (size_t i=0;i<hltResults->size();i++){
+        if (!hltResults->accept(i)) continue;
+        if (trigNames.at(i).find(mytrigNames[0]) != std::string::npos) trigHT = true;     
+        if (trigNames.at(i).find(mytrigNames[1]) != std::string::npos) trigHTdj = true;
+        if (trigNames.at(i).find(mytrigNames[2]) != std::string::npos) trigHTdjpt = true;     
+   }
 
-// generator information
+// Vertices and tracks
 
-  if (!iEvent.isRealData()){
+   edm::Handle<reco::VertexCollection> recVtxs;
+   iEvent.getByLabel("offlinePrimaryVertices", recVtxs); 
+   const reco::Vertex &pv = recVtxs->front();
+   nPV = recVtxs->size();
 
-  Handle<HepMCProduct> EvtHandle;
-  iEvent.getByLabel("generator",EvtHandle);
+   edm::Handle<reco::TrackCollection> generalTracks;
+   iEvent.getByLabel("generalTracks",generalTracks);
 
-  //get HepMC event
-  const HepMC::GenEvent* Evt = EvtHandle->GetEvent();
+   nTrks = generalTracks->size();
 
-    for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
-      if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Exotics found
+// Get Calo jets
+   edm::Handle<reco::CaloJetCollection> jetsh;
+   iEvent.getByLabel("CaloJetSelected",jetsh);
 
-        exotic X;
-	HepMC::GenParticle *exo = *p;
-        HepMC::GenVertex *Xvtx = exo->end_vertex();
+   std::cout << "n Calo jets: " << jetsh->size() << std::endl;
 
-        reco::Candidate::LorentzVector exop4( exo->momentum() );
-        X.pt = exop4.pt();
-        X.phi = exop4.phi();
-        X.eta = exop4.eta();
-	X.mass = exop4.mass();
+   for(reco::CaloJetCollection::const_iterator j=jetsh->begin(); j!=jetsh->end();++j){
 
-        for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
-	  if ((*pout)->pdg_id()>6) continue;
-	 
-	  genjet gj;
-	  HepMC::GenParticle *q = *pout;
+     jpt.push_back(j->pt());
+     jeta.push_back(j->eta());
+     jphi.push_back(j->phi());
+     jmass.push_back(j->mass());
+     
+   }
 
-          reco::Candidate::LorentzVector qp4(q->momentum());
-          gj.pt = qp4.pt();
-	  gj.phi = qp4.phi();
-	  gj.eta = qp4.eta();
-	  reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
-	  double lxy = qx4.Pt();
-	  gj.lxy = lxy;
-	  X.lxy = lxy;
-	  X.ctau = qx4.P()*exop4.mass()/exop4.P();
-
-          if (debugoutput)
-       	    std::cout << "Lxy: " << gj.lxy/10. << " pt: " << gj.pt << " eta: " << gj.eta << " phi: " << gj.phi << std::endl;
-
-          gjets.push_back(gj);
-        }
-
-        Xs.push_back(X);
-      }
-
-    }
-  }
-
-
+/*
 // Trigger objects 
 
    edm::Handle<trigger::TriggerEvent> triggerEvent;
@@ -273,6 +272,57 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     }
   }
 
+// generator information
+
+  if (!iEvent.isRealData()){
+
+  Handle<HepMCProduct> EvtHandle;
+  iEvent.getByLabel("generator",EvtHandle);
+
+  //get HepMC event
+  const HepMC::GenEvent* Evt = EvtHandle->GetEvent();
+
+    for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
+      if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Exotics found
+
+        exotic X;
+	HepMC::GenParticle *exo = *p;
+        HepMC::GenVertex *Xvtx = exo->end_vertex();
+
+        reco::Candidate::LorentzVector exop4( exo->momentum() );
+        X.pt = exop4.pt();
+        X.phi = exop4.phi();
+        X.eta = exop4.eta();
+	X.mass = exop4.mass();
+
+        for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
+	  if ((*pout)->pdg_id()>6) continue;
+	 
+	  genjet gj;
+	  HepMC::GenParticle *q = *pout;
+
+          reco::Candidate::LorentzVector qp4(q->momentum());
+          gj.pt = qp4.pt();
+	  gj.phi = qp4.phi();
+	  gj.eta = qp4.eta();
+	  reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
+	  double lxy = qx4.Pt();
+	  gj.lxy = lxy;
+	  X.lxy = lxy;
+	  X.ctau = qx4.P()*exop4.mass()/exop4.P();
+
+          if (debugoutput)
+       	    std::cout << "Lxy: " << gj.lxy/10. << " pt: " << gj.pt << " eta: " << gj.eta << " phi: " << gj.phi << std::endl;
+
+          gjets.push_back(gj);
+        }
+
+        Xs.push_back(X);
+      }
+
+    }
+  }
+*/
 // TransientTrack Builder
 
    edm::ESHandle<TransientTrackBuilder> theB;
@@ -300,20 +350,17 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
    BeamSpot = *BeamSpotH;
    const reco::Vertex bs(BeamSpot.position(),BeamSpot.covariance3D()) ;
 
-// Leading Primary Vertex
-
-   edm::Handle<std::vector<reco::Vertex> > primaryVertices;
-   iEvent.getByLabel("offlinePrimaryVertices",primaryVertices);
-   const reco::Vertex &pv = primaryVertices->front();
-
 // PFJets
 
    edm::Handle<reco::PFJetCollection> pfjetsh;
-   iEvent.getByLabel("ak5PFJets",pfjetsh);
+   iEvent.getByLabel("PFJetSelected",pfjetsh);
+
+   std::cout << "n PF jets: " << pfjetsh->size() << std::endl;
+
+   std::vector<reco::PFJet> dispPFJets;
+   std::vector<std::vector<reco::TransientTrack> > dispPFJetTracks;
 
    for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
-
-     if (j->pt()<50 || fabs(j->eta())>2) continue;
 
      pfjet pfj;
 
@@ -321,6 +368,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.pt = j->pt();
      pfj.eta = j->eta();
      pfj.phi = j->phi();
+     pfj.mass = j->mass();
 
      double lxy = -1;
      for (size_t i=0;i<gjets.size();i++){
@@ -346,6 +394,7 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.muN = j->muonMultiplicity();
 
      GlobalVector direction(j->px(), j->py(), j->pz());
+     direction = direction.unit();
 
      reco::TrackRefVector jtrks = j->getTrackRefs();
      std::vector<reco::TransientTrack> disptrks;
@@ -369,15 +418,19 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,pv).second;
         Measurement1D ip3d = IPTools::signedImpactParameter3D(t_trk,direction,pv).second;
 
-        if (fabs(ip3d.value())<0.03) 
+        if (fabs(ip2d.value())<0.05){ 
           nPromptTracks += 1; 
-        
-        if (fabs(ip2d.value())<0.05) {
           PromptEnergy += sqrt(0.1396*0.1396 + trk->p()*trk->p());
           continue;
         }
-	
+
         track track_;
+
+        /* NO EXTRA on AODSIM
+        GlobalVector inMom(trk->innerMomentum().x(),trk->innerMomentum().y(),trk->innerMomentum().z());
+	track_.dR1 = deltaR(inMom.eta(),inMom.phi(),direction.eta(),direction.phi());
+	track_.hit1 = jtrks[i]->innerPosition().rho();
+        */
 
         track_.pt = trk->pt();
         track_.eta = trk->eta();
@@ -392,22 +445,32 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	track_.ip3d = ip3d.value();
 	track_.ip3dsig = ip3d.significance();
 	track_.vtxweight = -1;
+        track_.vlxy = -1;
+        track_.lxy = -1;
+	track_.pdgid = 0;
+        track_.momid = 0;
+	track_.exo = 0;
 
+
+	// Track Truth
         edm::RefToBase<reco::Track> ref_trk(jtrks[i]); 
         if(RecoToSimColl.find(ref_trk) != RecoToSimColl.end()){
           TrackingParticleRef tp = RecoToSimColl[ref_trk].begin()->first;
+	 
+	  if (tp->genParticle().size()>0){
+	    std::vector<std::pair<int,double> > moms;
+  	    const HepMC::GenParticle *gp = tp->genParticle().at(0).get();
+	    moms.push_back(std::pair<int,double> (gp->pdg_id(),gp->production_vertex()->position().perp()));
+	    GetMothers(gp,moms);
+	    track_.pdgid = moms.front().first;
+            track_.lxy = moms.front().second/10.;
+            track_.momid = moms.at(1).first;
+	    if (moms.back().first == 6000111 || moms.back().first==6000112)
+	      track_.exo = moms.back().first;
+          }
           const TrackingVertex  *tv = tp->parentVertex().get();
 	  ROOT::Math::SVector<double,3> vector(tv->position().x() - pv.x(),tv->position().y()-pv.y(),0);
-          track_.lxy = ROOT::Math::Mag(vector); 
-        } else {
-          track_.lxy = -1;
-        }
-
-        if (debugoutput){
-          std::cout << "track pt: " << track_.pt \
-          << " algo: " << track_.algo \
-          << " ip2d: " << track_.ip2d \
-          << " lxy:  " << track_.lxy << std::endl;  
+          track_.vlxy = ROOT::Math::Mag(vector); 
         }
 
         tracks_.push_back(track_);
@@ -419,6 +482,9 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.PromptEnergyFrac = PromptEnergy/pfj.energy;
      pfj.nDispTracks = disptrks.size();
 
+
+     //if (nPromptTracks>5 || pfj.PromptEnergyFrac >0.3) continue; 
+
      // unless Vtx failes..  
      pfj.vtxchi2 = -1;
      pfj.vtxmass = -1;
@@ -427,23 +493,8 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.lxysig = -1;
 
      if (disptrks.size()>1){
-       
-       double maxshift =0.0001;
-       unsigned int maxstep = 30;
-       double maxlpshift = 0.1;
-       double weightThreshold = 0.5;
-       double sigmacut = 5.;
-       double Tini = 256.;
-       double ratio = 0.25;
-       static AdaptiveVertexFitter avf(
-         GeometricAnnealing ( sigmacut, Tini, ratio ), 
-         DefaultLinearizationPointFinder(),
-         KalmanVertexUpdator<5>(), 
-         KalmanVertexTrackCompatibilityEstimator<5>(), 
-         KalmanVertexSmoother() );
-       avf.setParameters ( maxshift, maxlpshift, maxstep, weightThreshold );
-    
-       TransientVertex jvtx = avf.vertex(disptrks);
+
+       TransientVertex jvtx = vtxfitter_.vertex(disptrks);
 
        if (jvtx.isValid()){
 
@@ -466,15 +517,6 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	   tracks_.at(i).phi = p3.phi();
 	   tracks_.at(i).vtxweight = jvtx.trackWeight(t_trk);
 
-	   if (debugoutput){
-             track track_ = tracks_.at(i);
-             std::cout << "track pt: " << track_.pt \
-             << " algo: " << track_.algo \
-             << " ip2d: " << track_.ip2d \
-             << " vtxw: " << track_.vtxweight \
-             << " lxy:  " << track_.lxy << std::endl;
-        }
-
 	   p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
          }
 
@@ -492,6 +534,17 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      }
 
      if (debugoutput){
+       for (size_t i=0;i<tracks_.size();i++){
+         track t = tracks_.at(i);
+         std::cout << "track pt: " << t.pt 
+         << " algo: " << t.algo 
+         << " ip2d: " << t.ip2d
+         << " weight: " << t.vtxweight 
+         << " pdgid: " << t.pdgid
+         << " exo: " << t.exo
+         << " lxy: " << t.lxy
+         << " vlxy:  " << t.vlxy << std::endl;  
+       }
        std::cout << "chi2: " << pfj.vtxchi2 
        << " vtxmass: " << pfj.vtxmass 
        << " lxy: " << pfj.lxy 
@@ -501,24 +554,155 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      }
      pfj.disptracks = tracks_;
      pfjets.push_back(pfj);
+     dispPFJets.push_back(*j);
+     dispPFJetTracks.push_back(disptrks);
 
    }
 
+   if (dispPFJets.size()>1){
+     for (size_t i=0;i<dispPFJets.size()-1;i++){
+       for (size_t j=i+1;j<dispPFJets.size();j++){
+
+         reco::PFJet j1 = dispPFJets.at(i);
+         reco::PFJet j2 = dispPFJets.at(j);
+         pfjet pfj1 = pfjets.at(i);
+         pfjet pfj2 = pfjets.at(j);
+
+         std::vector<reco::TransientTrack> disptrks = dispPFJetTracks.at(i);
+         std::vector<reco::TransientTrack> disptrks2 = dispPFJetTracks.at(j);
+         disptrks.insert(disptrks.end(),disptrks2.begin(),disptrks2.end());
+
+         std::vector<track> tracks_ = pfj1.disptracks;
+         std::vector<track> tracks2_ = pfj2.disptracks;
+	 tracks_.insert(tracks_.end(),tracks2_.begin(),tracks2_.end());
+	 pfjetpair pfj;
+
+         pfj.chgHadN = pfj1.chgHadN + pfj2.chgHadN;
+         pfj.neuHadN = pfj1.neuHadN + pfj2.neuHadN;
+	 pfj.muN = pfj1.muN + pfj2.muN;
+	 pfj.eleN = pfj1.eleN + pfj2.eleN;
+	 pfj.phN = pfj1.phN + pfj2.phN;
+         
+         pfj.idx1 = i;
+         pfj.idx2 = j;
+
+         pfj.chgHadFrac = (pfj1.chgHadFrac*pfj1.energy + pfj2.chgHadFrac*pfj2.energy)/(pfj1.energy+pfj2.energy);
+         pfj.neuHadFrac = (pfj1.neuHadFrac*pfj1.energy + pfj2.neuHadFrac*pfj2.energy)/(pfj1.energy+pfj2.energy);
+         pfj.muFrac = (pfj1.muFrac*pfj1.energy + pfj2.muFrac*pfj2.energy)/(pfj1.energy+pfj2.energy);
+         pfj.eleFrac = (pfj1.eleFrac*pfj1.energy + pfj2.eleFrac*pfj2.energy)/(pfj1.energy+pfj2.energy);
+         pfj.phFrac = (pfj1.phFrac*pfj1.energy + pfj2.phFrac*pfj2.energy)/(pfj1.energy+pfj2.energy);
+
+         reco::Candidate::LorentzVector p4 = j1.p4() + j2.p4();
+         pfj.energy = pfj1.energy + pfj2.energy;
+         pfj.pt = p4.pt();
+         pfj.eta = p4.eta();
+         pfj.phi = p4.phi();
+         pfj.mass = p4.mass();
+
+         // a la HLT variables
+         pfj.nPrompt = pfj1.nPrompt + pfj2.nPrompt;
+         pfj.PromptEnergyFrac = (pfj1.PromptEnergyFrac*pfj1.energy + pfj2.PromptEnergyFrac*pfj2.energy)/pfj.energy;
+         pfj.nDispTracks = disptrks.size();
+
+         pfj.vtxchi2 = -1;
+         pfj.vtxmass = -1;
+         pfj.vtxpt = -1;
+         pfj.lxy = -1;
+         pfj.lxysig = -1;
+
+         if (disptrks.size()>1){
+
+           TransientVertex jvtx = vtxfitter_.vertex(disptrks);
+
+           if (jvtx.isValid()){
+
+             reco::Vertex vtx(jvtx);
+ 
+             ROOT::Math::SVector<double,3> vector(vtx.position().x() - pv.x(),vtx.position().y()-pv.y(),0);
+             double lxy = ROOT::Math::Mag(vector);
+             reco::Candidate::CovarianceMatrix matrix = vtx.covariance() + pv.covariance();
+             double err = sqrt(ROOT::Math::Similarity(matrix,vector))/lxy;
+             double sig = lxy/err;
+
+             ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p4TrkSum;
+             for (size_t i=0;i<disptrks.size();i++){
+               reco::TransientTrack t_trk = disptrks.at(i);
+               GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
+
+               // update track parameters after succesful vtx fit
+               tracks_.at(i).pt = p3.perp();
+               tracks_.at(i).eta = p3.eta();
+               tracks_.at(i).phi = p3.phi();
+               tracks_.at(i).vtxweight = jvtx.trackWeight(t_trk);
+
+               p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
+             }
+
+
+             pfj.vtxchi2 = jvtx.normalisedChiSquared();
+             pfj.vtxmass = p4TrkSum.M();
+             pfj.vtxpt = p4TrkSum.Pt();
+             pfj.lxy = lxy;
+             pfj.lxysig = sig;
+
+           } else {
+             if (debugoutput)
+               std::cout << "Vertex Fit Failed!!" << std::endl;
+           }
+         }
+       pfj.disptracks=tracks_;
+       pfjetpairs.push_back(pfj);
+       }
+     }
+   }
 
    tree->Fill();
 }
 
 
+void DisplacedJetAnlzr::GetMothers(const HepMC::GenParticle *gp, std::vector<std::pair<int,double> > &moms){
+
+   HepMC::GenVertex *gv = gp->production_vertex();
+   if(gv != 0 ){
+     for(HepMC::GenVertex::particles_in_const_iterator mom = gv->particles_in_const_begin(); mom != gv->particles_in_const_end(); mom++){
+	  moms.push_back(std::pair<int,double> ( (*mom)->pdg_id(), gv->position().perp() ));
+          if (moms.back().first == 6000111 || moms.back().first == 6000112)
+            return;
+          GetMothers(*mom,moms);
+	  break;
+     }
+   }      
+   return ;
+}
+
 // ------------ method called once each job just before starting event loop  ------------
 void 
 DisplacedJetAnlzr::beginJob()
 {
-tree->Branch("triggers",&triggers);
+
+tree->Branch("run",&run,"run/I");
+tree->Branch("event",&event,"event/I");
+tree->Branch("lumi",&lumi,"lumi/I");
+
+tree->Branch("trigHT",&trigHT,"trigHT/O");
+tree->Branch("trigHTdj",&trigHTdj,"trigHTdj/O");
+tree->Branch("trigHTdjpt",&trigHTdjpt,"trigHTdjpt/O");
+
+tree->Branch("nPV",&nPV,"nPV/I");
+tree->Branch("nTrks",&nTrks,"nTrks/I");
+
+tree->Branch("jpt",&jpt);
+tree->Branch("jeta",&jeta);
+tree->Branch("jphi",&jphi);
+tree->Branch("jmass",&jmass);
+
 tree->Branch("Xs",&Xs);
 tree->Branch("gjets",&gjets);
 tree->Branch("pfjets",&pfjets);
+tree->Branch("pfjetpairs",&pfjetpairs);
 tree->Branch("trg1Objs",&trg1Objs);
 tree->Branch("trg2Objs",&trg2Objs);
+
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
