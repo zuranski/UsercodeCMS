@@ -39,7 +39,7 @@ elif dataType == "d":
    listAllFilesDBS(readFiles, "/HT/Run2011B-19Nov2011-v1/RECO",100)
 
 if dataType=="d":
-   process.GlobalTag.globaltag = 'FT_R_44_V11::All'
+   process.GlobalTag.globaltag = 'GR_R_44_V15::All'
    process.load('MyAnalysis.DisplacedJetAnlzr.run177782_cff')
    import PhysicsTools.PythonAnalysis.LumiList as LumiList
    import FWCore.ParameterSet.Types as CfgTypes
@@ -47,7 +47,7 @@ if dataType=="d":
    process.source.lumisToProcess = CfgTypes.untracked(CfgTypes.VLuminosityBlockRange())
    process.source.lumisToProcess.extend(myLumis)
 else:
-   process.GlobalTag.globaltag = 'START44_V12::All'
+   process.GlobalTag.globaltag = 'START44_V13::All'
 
 process.maxEvents = cms.untracked.PSet(
    input = cms.untracked.int32(nEvents)

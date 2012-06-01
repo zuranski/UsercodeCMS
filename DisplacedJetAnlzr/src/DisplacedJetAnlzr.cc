@@ -86,6 +86,13 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
       virtual void beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       virtual void endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&);
       void GetMothers(const HepMC::GenParticle *p, std::vector<std::pair<int,double> > &moms);
+      void ClearEventData();
+      void GetTrigObjects(const edm::Event&);
+      void GetGenInfo(const edm::Event&);
+      void GetEventInfo(const edm::Event&, const edm::EventSetup&);
+      void LoopCaloJets(const edm::Event&);
+      void LoopPFJets(const edm::Event&);
+      void DoVertexing(pfjet &pfj, std::vector<reco::TransientTrack> disptrks);
 
       edm::ParameterSet vtxconfig_;
       edm::InputTag hlttag_;
@@ -112,6 +119,11 @@ class DisplacedJetAnlzr : public edm::EDAnalyzer {
       std::vector<pfjetpair> pfjetpairs;
       std::vector<trgObj> trg1Objs;
       std::vector<trgObj> trg2Objs;
+
+      // global edm objects
+      reco::Vertex pv;
+      edm::ESHandle<TransientTrackBuilder> theB;
+
 };
 
 //
@@ -157,12 +169,28 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 {
    using namespace edm;
 
-// Clear variables
+   ClearEventData();
+   GetEventInfo(iEvent,iSetup);
+   LoopCaloJets(iEvent);
+   LoopPFJets(iEvent);
+
+   tree->Fill();
+
+}
+
+
+void DisplacedJetAnlzr::ClearEventData(){
+
    trigHT=false,trigHTdj=false,trigHTdjpt=false;
    nPV = 0; nTrks = 0;
    jpt.clear();jeta.clear();jphi.clear();jmass.clear();
+   Xs.clear();gjets.clear();
+   pfjets.clear();pfjetpairs.clear();
+   trg1Objs.clear();trg2Objs.clear();
 
-   Xs.clear();gjets.clear();pfjets.clear();pfjetpairs.clear();trg1Objs.clear();trg2Objs.clear();
+}
+
+void DisplacedJetAnlzr::GetEventInfo(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 
 // Run/Event/Lumi
    run = iEvent.id().run();
@@ -192,19 +220,35 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 
    edm::Handle<reco::VertexCollection> recVtxs;
    iEvent.getByLabel("offlinePrimaryVertices", recVtxs); 
-   const reco::Vertex &pv = recVtxs->front();
+   pv = recVtxs->front();
    nPV = recVtxs->size();
 
-   edm::Handle<reco::TrackCollection> generalTracks;
+   edm::Handle<edm::View<reco::Track> > generalTracks;
    iEvent.getByLabel("generalTracks",generalTracks);
 
    nTrks = generalTracks->size();
 
+// TransientTrack Builder
+   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",theB);
+
+// Reco to Sim Track association
+   if(!iEvent.isRealData() && useTP){
+     edm::Handle<std::vector<TrackingParticle> > TPCollectionH ;
+     try{
+       iEvent.getByLabel(edm::InputTag("mergedtruth","MergedTrackTruth","HLT"),TPCollectionH);
+       edm::ESHandle<TrackAssociatorBase> myAssociator;
+       iSetup.get<TrackAssociatorRecord>().get("TrackAssociatorByHits", myAssociator);
+       RecoToSimColl = myAssociator->associateRecoToSim(generalTracks,TPCollectionH,&iEvent );
+     } catch (...) {;}
+   }
+
+}
+
+void DisplacedJetAnlzr::LoopCaloJets(const edm::Event& iEvent){
+
 // Get Calo jets
    edm::Handle<reco::CaloJetCollection> jetsh;
    iEvent.getByLabel("CaloJetSelected",jetsh);
-
-   std::cout << "n Calo jets: " << jetsh->size() << std::endl;
 
    for(reco::CaloJetCollection::const_iterator j=jetsh->begin(); j!=jetsh->end();++j){
 
@@ -214,8 +258,11 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      jmass.push_back(j->mass());
      
    }
+}
 
+// TODO
 /*
+void DisplacedJetAnlzr::GetTrigObjects(const edm::Event& iEvent){
 // Trigger objects 
 
    edm::Handle<trigger::TriggerEvent> triggerEvent;
@@ -272,93 +319,133 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
     }
   }
 
+}
+*/
+
+void DisplacedJetAnlzr::GetGenInfo(const edm::Event& iEvent){
 // generator information
 
-  if (!iEvent.isRealData()){
+  if (iEvent.isRealData()) return;
 
-  Handle<HepMCProduct> EvtHandle;
+  edm::Handle<edm::HepMCProduct> EvtHandle;
   iEvent.getByLabel("generator",EvtHandle);
 
   //get HepMC event
   const HepMC::GenEvent* Evt = EvtHandle->GetEvent();
 
-    for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
-      if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Exotics found
+  for(HepMC::GenEvent::particle_const_iterator p = Evt->particles_begin(); p != Evt->particles_end(); ++p){
+    if((abs((*p)->pdg_id()) == 6000111 || abs((*p)->pdg_id()) == 6000112 ) && (*p)->status()==3){ // Exotics found
 
-        exotic X;
-	HepMC::GenParticle *exo = *p;
-        HepMC::GenVertex *Xvtx = exo->end_vertex();
+      exotic X;
+      HepMC::GenParticle *exo = *p;
+      HepMC::GenVertex *Xvtx = exo->end_vertex();
 
-        reco::Candidate::LorentzVector exop4( exo->momentum() );
-        X.pt = exop4.pt();
-        X.phi = exop4.phi();
-        X.eta = exop4.eta();
-	X.mass = exop4.mass();
+      reco::Candidate::LorentzVector exop4( exo->momentum() );
+      X.pt = exop4.pt();
+      X.phi = exop4.phi();
+      X.eta = exop4.eta();
+      X.mass = exop4.mass();
 
-        for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
-	  if ((*pout)->pdg_id()>6) continue;
-	 
-	  genjet gj;
-	  HepMC::GenParticle *q = *pout;
+      for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
+        if ((*pout)->pdg_id()>6) continue;
+ 
+        genjet gj;
+        HepMC::GenParticle *q = *pout;
 
-          reco::Candidate::LorentzVector qp4(q->momentum());
-          gj.pt = qp4.pt();
-	  gj.phi = qp4.phi();
-	  gj.eta = qp4.eta();
-	  reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
-	  double lxy = qx4.Pt();
-	  gj.lxy = lxy;
-	  X.lxy = lxy;
-	  X.ctau = qx4.P()*exop4.mass()/exop4.P();
+        reco::Candidate::LorentzVector qp4(q->momentum());
+        gj.pt = qp4.pt();
+        gj.phi = qp4.phi();
+        gj.eta = qp4.eta();
+        reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
+        double lxy = qx4.Pt();
+        gj.lxy = lxy;
+        X.lxy = lxy;
+        X.ctau = qx4.P()*exop4.mass()/exop4.P();
 
-          if (debugoutput)
-       	    std::cout << "Lxy: " << gj.lxy/10. << " pt: " << gj.pt << " eta: " << gj.eta << " phi: " << gj.phi << std::endl;
+        if (debugoutput)
+          std::cout << "Lxy: " << gj.lxy/10. << " pt: " << gj.pt << " eta: " << gj.eta << " phi: " << gj.phi << std::endl;
 
-          gjets.push_back(gj);
-        }
-
-        Xs.push_back(X);
+        gjets.push_back(gj);
       }
 
+      Xs.push_back(X);
     }
+
   }
-*/
-// TransientTrack Builder
+  
+}
 
-   edm::ESHandle<TransientTrackBuilder> theB;
-   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",theB);
+void DisplacedJetAnlzr::DoVertexing(pfjet &pfj, std::vector<reco::TransientTrack> disptrks){
 
-// Reco to Sim Track association
+  
+  if (disptrks.size()<2) return;
 
-   if(!iEvent.isRealData() && useTP){
-     Handle<edm::View<reco::Track> > trackCollectionH;
-     iEvent.getByLabel("generalTracks",trackCollectionH);
-     edm::Handle<std::vector<TrackingParticle> > TPCollectionH ;
-     try{
-       iEvent.getByLabel(edm::InputTag("mergedtruth","MergedTrackTruth","HLT"),TPCollectionH);
-       ESHandle<TrackAssociatorBase> myAssociator;
-       iSetup.get<TrackAssociatorRecord>().get("TrackAssociatorByHits", myAssociator);
-       RecoToSimColl = myAssociator->associateRecoToSim(trackCollectionH,TPCollectionH,&iEvent );
-     } catch (...) {;}
-   } 
+  TransientVertex jvtx = vtxfitter_.vertex(disptrks);
 
-// BeamSpot
+  if (jvtx.isValid()){
 
-   reco::BeamSpot BeamSpot;
-   edm::Handle<reco::BeamSpot> BeamSpotH;
-   iEvent.getByLabel("offlineBeamSpot",BeamSpotH);
-   BeamSpot = *BeamSpotH;
-   const reco::Vertex bs(BeamSpot.position(),BeamSpot.covariance3D()) ;
+    reco::Vertex vtx(jvtx);
 
-// PFJets
+    ROOT::Math::SVector<double,3> vector(vtx.position().x() - pv.x(),vtx.position().y()-pv.y(),0);
+    double lxy = ROOT::Math::Mag(vector);
+    reco::Candidate::CovarianceMatrix matrix = vtx.covariance() + pv.covariance();
+    double err = sqrt(ROOT::Math::Similarity(matrix,vector))/lxy;
+    double sig = lxy/err;
+
+    ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p4TrkSum;
+    for (size_t i=0;i<disptrks.size();i++){
+      reco::TransientTrack t_trk = disptrks.at(i);
+      GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
+
+      // update track parameters after succesful vtx fit
+      pfj.disptracks.at(i).pt = p3.perp();
+      pfj.disptracks.at(i).eta = p3.eta();
+      pfj.disptracks.at(i).phi = p3.phi();
+      pfj.disptracks.at(i).vtxweight = jvtx.trackWeight(t_trk);
+
+      p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
+    }
+
+    pfj.vtxchi2 = jvtx.normalisedChiSquared();
+    pfj.vtxmass = p4TrkSum.M();
+    pfj.vtxpt = p4TrkSum.Pt();
+    pfj.lxy = lxy;
+    pfj.lxysig = sig;
+
+  } else {
+    if (debugoutput)
+      std::cout << "Vertex Fit Failed!!" << std::endl;
+  }
+
+  if (debugoutput){
+    for (size_t i=0;i<pfj.disptracks.size();i++){
+      track t = pfj.disptracks.at(i);
+         std::cout << "track pt: " << t.pt 
+         << " algo: " << t.algo 
+         << " ip2d: " << t.ip2d
+         << " weight: " << t.vtxweight 
+         << " pdgid: " << t.pdgid
+         << " exo: " << t.exo
+         << " lxy: " << t.lxy
+         << " vlxy:  " << t.vlxy << std::endl;  
+       }
+       std::cout << "chi2: " << pfj.vtxchi2 
+       << " vtxmass: " << pfj.vtxmass 
+       << " lxy: " << pfj.lxy 
+       << " sig: " << pfj.lxysig 
+       << " promptEfrac " << pfj.PromptEnergyFrac  
+       << " ntrks: " << pfj.nDispTracks << std::endl;
+     }
+
+}
+
+
+void DisplacedJetAnlzr::LoopPFJets(const edm::Event& iEvent){
 
    edm::Handle<reco::PFJetCollection> pfjetsh;
    iEvent.getByLabel("PFJetSelected",pfjetsh);
 
-   std::cout << "n PF jets: " << pfjetsh->size() << std::endl;
-
-   std::vector<reco::PFJet> dispPFJets;
-   std::vector<std::vector<reco::TransientTrack> > dispPFJetTracks;
+   std::vector<std::vector<reco::TransientTrack> > PFJetDispTracks;
 
    for (reco::PFJetCollection::const_iterator j = pfjetsh->begin(); j != pfjetsh->end();++j){
 
@@ -410,9 +497,8 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
 	
 	const reco::Track *trk = jtrks[i].get();
 
+	if(!jtrks[i]->quality(reco::TrackBase::highPurity)) continue;
         if (jtrks[i]->pt() < 1.) continue;
-        if (jtrks[i]->normalizedChi2() > 10) continue;
-        if (jtrks[i]->numberOfValidHits() < 5) continue;
 
         reco::TransientTrack t_trk = theB->build(*jtrks[i].get());
         Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,pv).second;
@@ -425,12 +511,6 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
         }
 
         track track_;
-
-        /* NO EXTRA on AODSIM
-        GlobalVector inMom(trk->innerMomentum().x(),trk->innerMomentum().y(),trk->innerMomentum().z());
-	track_.dR1 = deltaR(inMom.eta(),inMom.phi(),direction.eta(),direction.phi());
-	track_.hit1 = jtrks[i]->innerPosition().rho();
-        */
 
         track_.pt = trk->pt();
         track_.eta = trk->eta();
@@ -482,9 +562,6 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.PromptEnergyFrac = PromptEnergy/pfj.energy;
      pfj.nDispTracks = disptrks.size();
 
-
-     //if (nPromptTracks>5 || pfj.PromptEnergyFrac >0.3) continue; 
-
      // unless Vtx failes..  
      pfj.vtxchi2 = -1;
      pfj.vtxmass = -1;
@@ -492,84 +569,29 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
      pfj.lxy = -1;
      pfj.lxysig = -1;
 
-     if (disptrks.size()>1){
-
-       TransientVertex jvtx = vtxfitter_.vertex(disptrks);
-
-       if (jvtx.isValid()){
-
-	 reco::Vertex vtx(jvtx);
-
-         ROOT::Math::SVector<double,3> vector(vtx.position().x() - pv.x(),vtx.position().y()-pv.y(),0);
-         double lxy = ROOT::Math::Mag(vector);
-	 reco::Candidate::CovarianceMatrix matrix = vtx.covariance() + pv.covariance();
-	 double err = sqrt(ROOT::Math::Similarity(matrix,vector))/lxy;
-	 double sig = lxy/err;
-
-         ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p4TrkSum;
-	 for (size_t i=0;i<disptrks.size();i++){
-	   reco::TransientTrack t_trk = disptrks.at(i);
-           GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
-
-           // update track parameters after succesful vtx fit
-	   tracks_.at(i).pt = p3.perp();
-	   tracks_.at(i).eta = p3.eta();
-	   tracks_.at(i).phi = p3.phi();
-	   tracks_.at(i).vtxweight = jvtx.trackWeight(t_trk);
-
-	   p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
-         }
-
-
-	 pfj.vtxchi2 = jvtx.normalisedChiSquared();
-	 pfj.vtxmass = p4TrkSum.M();
-	 pfj.vtxpt = p4TrkSum.Pt();
-         pfj.lxy = lxy;
-	 pfj.lxysig = sig;
-
-       } else {
-         if (debugoutput)
-           std::cout << "Vertex Fit Failed!!" << std::endl;
-       }
-     }
-
-     if (debugoutput){
-       for (size_t i=0;i<tracks_.size();i++){
-         track t = tracks_.at(i);
-         std::cout << "track pt: " << t.pt 
-         << " algo: " << t.algo 
-         << " ip2d: " << t.ip2d
-         << " weight: " << t.vtxweight 
-         << " pdgid: " << t.pdgid
-         << " exo: " << t.exo
-         << " lxy: " << t.lxy
-         << " vlxy:  " << t.vlxy << std::endl;  
-       }
-       std::cout << "chi2: " << pfj.vtxchi2 
-       << " vtxmass: " << pfj.vtxmass 
-       << " lxy: " << pfj.lxy 
-       << " sig: " << pfj.lxysig 
-       << " promptEfrac " << pfj.PromptEnergyFrac  
-       << " ntrks: " << pfj.nDispTracks << std::endl;
-     }
      pfj.disptracks = tracks_;
      pfjets.push_back(pfj);
-     dispPFJets.push_back(*j);
-     dispPFJetTracks.push_back(disptrks);
+     PFJetDispTracks.push_back(disptrks);
 
-   }
+  }
 
-   if (dispPFJets.size()>1){
-     for (size_t i=0;i<dispPFJets.size()-1;i++){
-       for (size_t j=i+1;j<dispPFJets.size();j++){
+  // single candidates
+  for (unsigned int i=0;i<pfjets.size();i++){
+    DoVertexing(pfjets.at(i),PFJetDispTracks.at(i));
+  }
 
-         reco::PFJet j1 = dispPFJets.at(i);
-         reco::PFJet j2 = dispPFJets.at(j);
+  // double candidates
+  if (pfjets.size()>1){
+     for (size_t i=0;i<pfjets.size()-1;i++){
+       for (size_t j=i+1;j<pfjets.size();j++){
+
+         reco::PFJet j1 = pfjetsh->at(i);
+         reco::PFJet j2 = pfjetsh->at(j);
          pfjet pfj1 = pfjets.at(i);
          pfjet pfj2 = pfjets.at(j);
 
-         std::vector<reco::TransientTrack> disptrks = dispPFJetTracks.at(i);
-         std::vector<reco::TransientTrack> disptrks2 = dispPFJetTracks.at(j);
+         std::vector<reco::TransientTrack> disptrks = PFJetDispTracks.at(i);
+         std::vector<reco::TransientTrack> disptrks2 = PFJetDispTracks.at(j);
          disptrks.insert(disptrks.end(),disptrks2.begin(),disptrks2.end());
 
          std::vector<track> tracks_ = pfj1.disptracks;
@@ -610,53 +632,13 @@ DisplacedJetAnlzr::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
          pfj.lxy = -1;
          pfj.lxysig = -1;
 
-         if (disptrks.size()>1){
-
-           TransientVertex jvtx = vtxfitter_.vertex(disptrks);
-
-           if (jvtx.isValid()){
-
-             reco::Vertex vtx(jvtx);
- 
-             ROOT::Math::SVector<double,3> vector(vtx.position().x() - pv.x(),vtx.position().y()-pv.y(),0);
-             double lxy = ROOT::Math::Mag(vector);
-             reco::Candidate::CovarianceMatrix matrix = vtx.covariance() + pv.covariance();
-             double err = sqrt(ROOT::Math::Similarity(matrix,vector))/lxy;
-             double sig = lxy/err;
-
-             ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> > p4TrkSum;
-             for (size_t i=0;i<disptrks.size();i++){
-               reco::TransientTrack t_trk = disptrks.at(i);
-               GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
-
-               // update track parameters after succesful vtx fit
-               tracks_.at(i).pt = p3.perp();
-               tracks_.at(i).eta = p3.eta();
-               tracks_.at(i).phi = p3.phi();
-               tracks_.at(i).vtxweight = jvtx.trackWeight(t_trk);
-
-               p4TrkSum += jvtx.trackWeight(t_trk) * ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.1396);
-             }
-
-
-             pfj.vtxchi2 = jvtx.normalisedChiSquared();
-             pfj.vtxmass = p4TrkSum.M();
-             pfj.vtxpt = p4TrkSum.Pt();
-             pfj.lxy = lxy;
-             pfj.lxysig = sig;
-
-           } else {
-             if (debugoutput)
-               std::cout << "Vertex Fit Failed!!" << std::endl;
-           }
-         }
-       pfj.disptracks=tracks_;
-       pfjetpairs.push_back(pfj);
+         pfj.disptracks=tracks_;
+         DoVertexing(pfj,disptrks);
+         pfjetpairs.push_back(pfj);
        }
      }
    }
 
-   tree->Fill();
 }
 
 
