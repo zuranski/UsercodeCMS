@@ -1,4 +1,5 @@
 # As documented in https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookCollisionsDataAnalysis
+# without HBHE noise filter
 
 # This requires Tracker voltage on.
 process.load('HLTrigger.special.hltPhysicsDeclared_cfi')
@@ -21,8 +22,6 @@ process.noscraping = cms.EDFilter("FilterOutScraping",
                                 thresh = cms.untracked.double(0.25)
                                 )
 
-process.load('CommonTools/RecoAlgos/HBHENoiseFilter_cfi')
-
 process.CleanUpDataSeq = cms.Sequence(process.hltPhysicsDeclared *
-                                       process.primaryVertexFilter * process.noscraping * process.HBHENoiseFilter)
-process.CleanUpMCSeq = cms.Sequence(process.primaryVertexFilter * process.noscraping * process.HBHENoiseFilter)
+                                       process.primaryVertexFilter * process.noscraping)
+process.CleanUpMCSeq = cms.Sequence(process.primaryVertexFilter * process.noscraping)

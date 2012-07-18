@@ -12,11 +12,13 @@
 <use name="TrackingTools/TransientTrack"/>
 <use name="TrackingTools/Records"/>
 <use name="TrackingTools/IPTools"/>
+<use name="Geometry/Records"/>
 <use name="RecoVertex/AdaptiveVertexFit"/>
 <use name="RecoVertex/KalmanVertexFit"/>
 <use name="RecoVertex/ConfigurableVertexReco"/>
 <use name="SimTracker/Records"/>
 <use name="CondFormats/DataRecord"/>
+<use name="PhysicsTools/RecoUtils"/>
 <flags   CXXFLAGS="-g"/>
 <export>
   <lib   name="1"/>

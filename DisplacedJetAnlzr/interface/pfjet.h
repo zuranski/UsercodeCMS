@@ -7,10 +7,11 @@
 struct pfjet {
 
    double energy,pt,eta,phi,mass;
+   double truelxy;
    double phFrac,neuHadFrac,chgHadFrac,eleFrac,muFrac,PromptEnergyFrac;
-   int phN,neuHadN,chgHadN,eleN,muN,nPrompt;
-   double lxy,lxysig,vtxmass,vtxpt,vtxchi2;
-   int nDispTracks;
+   int phN,neuHadN,chgHadN,eleN,muN;
+   int nDispTracks,nPrompt;
+   double lxy,lxysig,vtxmass,vtxpt,vtxX,vtxY,vtxZ,vtxchi2,vtxCharge,vtxdR,vtxN;
    std::vector<track> disptracks;
 
 };

@@ -16,7 +16,9 @@ process = cms.Process('hltreco')
 process.load('Configuration.StandardSequences.Services_cff')
 #process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.StandardSequences.GeometryDB_cff')
+process.load('RecoTracker.Configuration.RecoTracker_cff')
+#process.load('Configuration.StandardSequences.GeometryDB_cff')
+process.load("Configuration.StandardSequences.GeometryExtended_cff")
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
@@ -28,7 +30,7 @@ readFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",fileNames = readFiles)
 
 if dataType == "u" or dataType == "b":
-   listAllFilesDBS(readFiles, "/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau-350_7TeV-pythia6/Fall11-E7TeV_Ave23_50ns-v1/GEN-SIM-RAW-HLTDEBUG-RECODEBUG",10,1)
+   listAllFilesDBS(readFiles, "/HTo2LongLivedTo4F_MH-400_MFF-150_CTau-400_7TeV-pythia6/Fall11-DEBUG-PU_S6_START44_V9B-v4/GEN-SIM-RECODEBUG",10,1)
 elif dataType == "q120":
    listAllFilesDBS(readFiles, "/QCD_Pt-120to170_TuneZ2_7TeV_pythia6/Fall11-PU_S6_START42_V14B-v1/AODSIM",10)
 elif dataType == "q170":
@@ -39,7 +41,7 @@ elif dataType == "d":
    listAllFilesDBS(readFiles, "/HT/Run2011B-19Nov2011-v1/RECO",100)
 
 if dataType=="d":
-   process.GlobalTag.globaltag = 'GR_R_44_V15::All'
+   process.GlobalTag.globaltag = 'FT_R_44_V11::All'
    process.load('MyAnalysis.DisplacedJetAnlzr.run177782_cff')
    import PhysicsTools.PythonAnalysis.LumiList as LumiList
    import FWCore.ParameterSet.Types as CfgTypes
@@ -47,7 +49,7 @@ if dataType=="d":
    process.source.lumisToProcess = CfgTypes.untracked(CfgTypes.VLuminosityBlockRange())
    process.source.lumisToProcess.extend(myLumis)
 else:
-   process.GlobalTag.globaltag = 'START44_V13::All'
+   process.GlobalTag.globaltag = 'START44_V9B::All'
 
 process.maxEvents = cms.untracked.PSet(
    input = cms.untracked.int32(nEvents)
@@ -66,14 +68,14 @@ process.skimUsingHLT = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone(
 process.djtuple = cms.EDAnalyzer('DisplacedJetAnlzr',
     hlttag = cms.InputTag("TriggerResults","","HLT"),
     debugoutput = cms.bool(False),
-    useTP = cms.bool(False),
+    useTP = cms.bool(True),
     vertexfitter = cms.PSet(
-        fitter = cms.string('avf'),
-        sigmacut = cms.double(10.0),
-        Tini = cms.double(256.0),
-        ratio = cms.double(0.25),
-        maxDistance = cms.double(0.001),
-        maxNbrOfIteration = cms.int32(30)
+        finder = cms.string('avf')
+        #sigmacut = cms.double(10.0),
+        #Tini = cms.double(256.0),
+        #ratio = cms.double(0.25),
+        #maxDistance = cms.double(0.001),
+        #maxNbrOfIteration = cms.int32(30)
     )
 )
 
@@ -86,6 +88,9 @@ process.options = cms.untracked.PSet(
     wantSummary = cms.untracked.bool(True)
 )
 
+
+### Signal MC filter for displaced jets
+execfile("../python/SignalMCFilter_cfg.py")
 
 ### Clean up filters (scraping, HBHE noise, good PV)
 execfile("../python/CleanUpFilters_cfg.py")
@@ -104,18 +109,20 @@ execfile("../python/JetID_cfg.py")
 ### Jet selectors ###
 execfile("../python/JetSelectors_cfg.py")
 
+process.tuple = cms.Path()
+
+if dataType == "u" or dataType == "b":
+	process.tuple*=process.filterSignalMCSeq
+
 if dataType == "d":
-    process.tuple = cms.Path(
-	process.skimUsingHLT
-	*process.CleanUpDataSeq
-        *process.JetIDSeq
-	*process.JetCorrectionsSeq
-	*process.JetSelectorsSeq
-	*process.djtuple)
+	process.tuple*=process.skimUsingHLT
+	process.tuple*=process.CleanUpDataSeq
 else:
-    process.tuple = cms.Path(
-	process.CleanUpMCSeq
-	*process.JetIDSeq
-	*process.JetCorrectionsSeq
-	*process.JetSelectorsSeq
-	*process.djtuple)
+	process.tuple*=process.CleanUpMCSeq
+
+
+process.tuple*=process.JetIDSeq
+process.tuple*=process.JetCorrectionsSeq
+process.tuple*=process.JetSelectorsSeq
+process.tuple*=process.djtuple
+
