@@ -21,6 +21,7 @@ process.load('RecoTracker.Configuration.RecoTracker_cff')
 process.load("Configuration.StandardSequences.GeometryExtended_cff")
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.load("SimTracker.TrackAssociation.TrackAssociatorByHits_cfi")
 
 #build transient tracks
 process.load("TrackingTools.TransientTrack.TransientTrackBuilder_cfi")
