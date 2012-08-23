@@ -118,7 +118,7 @@ void DJ_DisplacedJets::DoVertexing(const edm::EventSetup& iSetup, djcandidate &d
       
     for (size_t i=0;i<djc.disptracks.size();i++){
       track t = djc.disptracks.at(i);
-      edm::LogInfo("DJ_DisplacedJetsInfo")
+      edm::LogInfo("DJ_DisplacedJets")
       << "track" 
       << " pt: " << t.pt 
       << " ip2d: " << t.ip2d
@@ -129,7 +129,7 @@ void DJ_DisplacedJets::DoVertexing(const edm::EventSetup& iSetup, djcandidate &d
       << " guesslxy:  " << t.guesslxy;  
     }
        
-     edm::LogInfo("DJ_DisplacedJetsInfo")
+     edm::LogInfo("DJ_DisplacedJets")
      << " VTX "
      << " chi2: " << djc.vtxchi2 
      << " vtxmass: " << djc.vtxmass 
@@ -263,11 +263,6 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
         tracks_.push_back(track_);
         disptrks.push_back(t_trk);
      }
-
-//!!!!!!!!!!!!!! temporary
-//     if (nPromptTracks>=5) continue;
-//     if (PromptEnergy/djc.energy>0.2) continue;
-//!!!!!!!!!!!!!!
 
      // a la HLT variables
      djc.nPrompt = nPromptTracks;

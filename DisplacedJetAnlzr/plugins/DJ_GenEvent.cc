@@ -46,7 +46,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     }
 
   } catch (cms::Exception &e) {
-    edm::LogError("DJ_GenEventError") << e.what();
+    edm::LogError("DJ_GenEvent") << e.what();
   }
 
   iEvent.put( gjets,   "gjets"   );

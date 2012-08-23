@@ -97,7 +97,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
   // Technical Trigger Part
   if(l1GtReadoutRecord.isValid()) {
-    edm::LogInfo("DJ_EventFiltersInfo") << "Successfully obtained " << l1InputTag;
+    edm::LogInfo("DJ_EventFilters") << "Successfully obtained " << l1InputTag;
 
     L1GtFdlWord fdlWord = l1GtReadoutRecord->gtFdlWord();
     if (fdlWord.physicsDeclared() == 1)
@@ -119,7 +119,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       *isbscbeamhalo.get() = true;
 
   } else {
-    edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << l1InputTag;
+    edm::LogError("DJ_EventFilters") << "Error! Can't get the product " << l1InputTag;
   }
 
   // Good Primary Vertex Part
@@ -127,7 +127,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByLabel(vtxInputTag,primaryVertices);
 
   if(primaryVertices.isValid()) {
-    edm::LogInfo("DJ_EventFiltersInfo") << "Total # Primary Vertices: " << primaryVertices->size();
+    edm::LogInfo("DJ_EventFilters") << "Total # Primary Vertices: " << primaryVertices->size();
 
     for( reco::VertexCollection::const_iterator it=primaryVertices->begin() ; it!=primaryVertices->end() ; ++it ) {
       if( !(it->isFake()) && it->ndof() > vtxMinNDOF &&
@@ -135,7 +135,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         ) *isprimaryvertex.get() = true;
     }
   } else {
-    edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << vtxInputTag;
+    edm::LogError("DJ_EventFilters") << "Error! Can't get the product " << vtxInputTag;
   }
 
   // Scraping Events Part
@@ -143,7 +143,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByLabel(trkInputTag,tracks);
 
   if(tracks.isValid()) {
-    edm::LogInfo("DJ_EventFiltersInfo") << "Total # Tracks: " << tracks->size();
+    edm::LogInfo("DJ_EventFilters") << "Total # Tracks: " << tracks->size();
 
     int numhighpurity = 0;
     double fraction = 1.;
@@ -157,7 +157,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       if( fraction < hpTrackThreshold ) *isbeamscraping.get() = true;
     }
   } else {
-    edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << trkInputTag;
+    edm::LogError("DJ_EventFilters") << "Error! Can't get the product " << trkInputTag;
   }
 
   // Hcal Noise Part
@@ -165,11 +165,11 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByLabel(hcalNoiseInputTag, hbheFilterResult);
 
   if(hbheFilterResult.isValid()) {
-    edm::LogInfo("DJ_EventFiltersInfo") << "Successfully obtained " << hcalNoiseInputTag;
+    edm::LogInfo("DJ_EventFilters") << "Successfully obtained " << hcalNoiseInputTag;
 
       *passhbhenoisefilter.get()=*hbheFilterResult;
   } else {
-    edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << hcalNoiseInputTag;
+    edm::LogError("DJ_EventFilters") << "Error! Can't get the product " << hcalNoiseInputTag;
   }
 
   // Beam Halo part
@@ -177,12 +177,12 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByLabel(beamHaloInputTag,TheBeamHaloSummary); 
 
   if(TheBeamHaloSummary.isValid()) {
-    edm::LogInfo("DJ_EventFiltersInfo") << "Successfully obtained " << beamHaloInputTag;
+    edm::LogInfo("DJ_EventFilters") << "Successfully obtained " << beamHaloInputTag;
     const reco::BeamHaloSummary TheSummary = (*TheBeamHaloSummary.product() );
     *passbeamhalofilterloose.get() = !TheSummary.CSCLooseHaloId();
     *passbeamhalofiltertight.get() = !TheSummary.CSCTightHaloId();    
   } else {
-    edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << beamHaloInputTag;
+    edm::LogError("DJ_EventFilters") << "Error! Can't get the product " << beamHaloInputTag;
   }
 
   //Tracking failure filter:
@@ -217,17 +217,10 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   if(EcalMaskedCellDRFilterResult.isValid()) {
     *passEcalMaskedCellDRFilter.get()=!(*EcalMaskedCellDRFilterResult);
   }
-  //else {
-  //  edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << ecalMaskedCellDRFilterInputTag;
-  //}
   
   if(CaloBoundaryDRFilterResult.isValid()) {
     *passCaloBoundaryDRFilter.get()=!(*CaloBoundaryDRFilterResult);
   }
-  //else {
-  //  edm::LogError("DJ_EventFiltersError") << "Error! Can't get the product " << caloBoundaryDRFilterInputTag;
-  //}
-
 
   //HCAL laser filter:
   edm::Handle<bool> HcalLaserEventFilterResult;

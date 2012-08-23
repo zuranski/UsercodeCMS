@@ -105,7 +105,6 @@ beginJob() {
 	EXPAND(   STRING_INT_M, fTypes::mapStringInt    , "");
 	EXPAND(STRING_STRING_M, fTypes::mapStringString , "");
 
-	//EXPAND(GENJET, genjet, "");
         EXPAND(GENJET_V, std::vector<genjet>, "");
         EXPAND(DJCANDIDATE_V, std::vector<djcandidate>, "");
 #undef EXPAND

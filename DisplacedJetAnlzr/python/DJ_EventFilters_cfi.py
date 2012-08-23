@@ -17,7 +17,6 @@ djeventfilters = cms.EDProducer("DJ_EventFilters",
     TrackingFailureMinSumPtOverHT = cms.double(0.10),
     EcalMaskedCellDRFilterInputTag = cms.InputTag('simpleDRfilter','deadCellStatus'),
     CaloBoundaryDRFilterInputTag = cms.InputTag('simpleDRfilter','boundaryStatus'),
-    #
     HcalLaserEventFilterInputTag               = cms.InputTag('hcalLaserEventFilter'),
     EcalDeadCellTriggerPrimitiveFilterInputTag = cms.InputTag('EcalDeadCellTriggerPrimitiveFilter'),
     EcalDeadCellBoundaryEnergyFilterInputTag   = cms.InputTag('EcalDeadCellBoundaryEnergyFilter'),
