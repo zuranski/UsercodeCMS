@@ -1,11 +1,12 @@
-#ifndef MyAnalysis_DisplacedJetAnlzr_pfjet_h
-#define MyAnalysis_DisplacedJetAnlzr_pfjet_h
+#ifndef MyAnalysis_DisplacedJetAnlzr_djcandidate_h
+#define MyAnalysis_DisplacedJetAnlzr_djcandidate_h
 
 #include <vector>
 #include "MyAnalysis/DisplacedJetAnlzr/interface/track.h"
 
-struct pfjet {
+struct djcandidate {
 
+   int idx1,idx2;
    double energy,pt,eta,phi,mass;
    double truelxy;
    double phFrac,neuHadFrac,chgHadFrac,eleFrac,muFrac,PromptEnergyFrac;

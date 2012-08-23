@@ -1,25 +1,5 @@
 <use name="FWCore/Framework"/>
-<use name="CommonTools/UtilAlgos"/>
-<use name="FWCore/PluginManager"/>
-<use name="FWCore/ParameterSet"/>
-<use name="SimDataFormats/GeneratorProducts"/>
-<use name="HLTrigger/HLTcore" />
 <use name="rootrflx"/>
-<use name="hepmc"/>
-<use name="clhep"/>
-<use name="DataFormats/ParticleFlowReco"/>
-<use name="DataFormats/JetReco"/>
-<use name="TrackingTools/TransientTrack"/>
-<use name="TrackingTools/Records"/>
-<use name="TrackingTools/IPTools"/>
-<use name="Geometry/Records"/>
-<use name="RecoVertex/AdaptiveVertexFit"/>
-<use name="RecoVertex/KalmanVertexFit"/>
-<use name="RecoVertex/ConfigurableVertexReco"/>
-<use name="SimTracker/Records"/>
-<use name="CondFormats/DataRecord"/>
-<use name="PhysicsTools/RecoUtils"/>
-<flags   CXXFLAGS="-g"/>
+<use name="rootmath"/>
 <export>
-  <lib   name="1"/>
 </export>

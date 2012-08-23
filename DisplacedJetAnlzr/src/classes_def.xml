@@ -1,9 +1,4 @@
 <lcgdict>
-  <class name="exotic"/>
-  <class name="edm::Wrapper<exotic>"/>
-  <class name="std::vector<exotic>"/>
-  <class name="edm::Wrapper<std::vector<exotic> >"/>
-
   <class name="track"/>
   <class name="edm::Wrapper<track>"/>
   <class name="std::vector<track>"/>
@@ -14,16 +9,6 @@
   <class name="std::vector<genjet>"/>
   <class name="edm::Wrapper<std::vector<genjet> >"/>
   
-  <class name="pfjet"/>
-  <class name="edm::Wrapper<pfjet>"/>
-  <class name="std::vector<pfjet>"/>
-  <class name="edm::Wrapper<std::vector<pfjet> >"/>
-
-  <class name="pfjetpair"/>
-  <class name="edm::Wrapper<pfjetpair>"/>
-  <class name="std::vector<pfjetpair>"/>
-  <class name="edm::Wrapper<std::vector<pfjetpair> >"/>
-
   <class name="djcandidate"/>
   <class name="edm::Wrapper<djcandidate>"/>
   <class name="std::vector<djcandidate>"/>

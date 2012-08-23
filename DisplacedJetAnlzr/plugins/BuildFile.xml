@@ -1,0 +1,11 @@
+<use   name="FWCore/Framework"/>
+<use   name="CommonTools/UtilAlgos"/>
+<use   name="HLTrigger/HLTcore"/>
+<use   name="DataFormats/PatCandidates"/>
+<use   name="TrackingTools/IPTools"/>
+<use   name="RecoVertex/ConfigurableVertexReco"/>
+<use   name="SimTracker/Records"/>
+<use   name="PhysicsTools/RecoUtils"/>
+<library   file="*.cc" name="DisplacedFermionsDJPlugins">
+  <flags   EDM_PLUGIN="1"/>
+</library>

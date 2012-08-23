@@ -3,7 +3,7 @@
 
 struct genjet {
 
-   double pt,eta,phi,lxy;
+   double pt,eta,phi,lxy,ctau;
 
 };
 
