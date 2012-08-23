@@ -1,14 +1,42 @@
 <lcgdict>
   <class name="exotic"/>
+  <class name="edm::Wrapper<exotic>"/>
   <class name="std::vector<exotic>"/>
-  <class name="genjet"/>
-  <class name="std::vector<genjet>"/>
+  <class name="edm::Wrapper<std::vector<exotic> >"/>
+
   <class name="track"/>
+  <class name="edm::Wrapper<track>"/>
   <class name="std::vector<track>"/>
+  <class name="edm::Wrapper<std::vector<track> >"/>
+
+  <class name="genjet"/>
+  <class name="edm::Wrapper<genjet>"/>
+  <class name="std::vector<genjet>"/>
+  <class name="edm::Wrapper<std::vector<genjet> >"/>
+  
   <class name="pfjet"/>
+  <class name="edm::Wrapper<pfjet>"/>
   <class name="std::vector<pfjet>"/>
+  <class name="edm::Wrapper<std::vector<pfjet> >"/>
+
   <class name="pfjetpair"/>
+  <class name="edm::Wrapper<pfjetpair>"/>
   <class name="std::vector<pfjetpair>"/>
-  <class name="trgObj"/>
-  <class name="std::vector<trgObj>"/>
+  <class name="edm::Wrapper<std::vector<pfjetpair> >"/>
+
+  <class name="djcandidate"/>
+  <class name="edm::Wrapper<djcandidate>"/>
+  <class name="std::vector<djcandidate>"/>
+  <class name="edm::Wrapper<std::vector<djcandidate> >"/>
+
+  <class name="std::map<std::string,bool>"/>
+  <class name="edm::Wrapper<std::map<std::string,bool> >"/>
+
+  <class name="std::map<std::string,int>"/>
+  <class name="edm::Wrapper<std::map<std::string,int> >"/>
+
+  <class name="std::map<std::string,std::string>"/>
+  <class name="edm::Wrapper<std::map<std::string,std::string> >"/>
+
+  <class name="ROOT::Math::PtEtaPhiM4D<float>"/>
 </lcgdict>
