@@ -19,15 +19,21 @@ adjust.loadAndConfigureEcalSeverityLevelProducer(process)
 adjust.loadAndConfigureRecoTracker(process)
 adjust.loadAndConfigureTrackAssociation(process, options.isData)
 
-process.p_djPat  = adjust.djPat(process,options)
-process.p_hbheFlag = adjust.addHbheNoiseFilterResult(process,options)
+#process.p = cms.Path()
+#process.p_djPat  = adjust.djPat(process,options)
+#process.p_hbheFlag = adjust.addHbheNoiseFilterResult(process,options)
+#print process.p
 #process.p_fltrFlgs = adjust.addMetFilterFlags(process,options)
 process.p_DJ  = DJ(process,options).path()
 
-schedule = cms.Schedule( process.p_djPat,
-                         process.p_hbheFlag,
-                         #process.p_fltrFlgs,
-                         process.p_DJ )
+#dummy = None
+#print process.p_djFilters.moduleNames()
+#print process.p_djPat.dumpConfig(dummy)
+
+#process.p = process.p_djFilters*process.p_djPat
+            #*process.p_hbheFlag
+            #*process.p_fltrFlgs
+            #*process.p_DJ
 
 # write this config as a single file
 file = open(options.output.replace('.root','_cfg.py'),'w')
