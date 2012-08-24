@@ -20,6 +20,8 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+
 
 class DJ_DisplacedJets : public edm::EDProducer {
    public:

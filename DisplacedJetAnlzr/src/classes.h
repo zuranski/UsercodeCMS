@@ -3,6 +3,7 @@
 
 #include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/djcandidate.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/trgobj.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 #include <string>
 #include <map>
@@ -19,6 +20,8 @@ namespace {
     edm::Wrapper<std::vector<track> > trks;
     edm::Wrapper<djcandidate> djc;
     edm::Wrapper<std::vector<djcandidate> > djcs;
+    edm::Wrapper<trgobj> trgo;
+    edm::Wrapper<std::vector<trgobj> > trgos;
 
     std::map<std::string,bool> dummy0;
     edm::Wrapper<std::map<std::string,bool> > dummy1;

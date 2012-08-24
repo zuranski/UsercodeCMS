@@ -14,6 +14,11 @@
   <class name="std::vector<djcandidate>"/>
   <class name="edm::Wrapper<std::vector<djcandidate> >"/>
 
+  <class name="trgobj"/>
+  <class name="edm::Wrapper<trgobj>"/>
+  <class name="std::vector<trgobj>"/>
+  <class name="edm::Wrapper<std::vector<trgobj> >"/>
+
   <class name="std::map<std::string,bool>"/>
   <class name="edm::Wrapper<std::map<std::string,bool> >"/>
 

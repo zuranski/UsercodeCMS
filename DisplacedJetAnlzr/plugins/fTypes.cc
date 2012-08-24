@@ -37,6 +37,7 @@ std::map<std::string,fTypes::LEAFTYPE> fTypes::dict() {
 
   dict["genjets"] = GENJET_V;
   dict["djcandidates"] = DJCANDIDATE_V;
+  dict["trgobjs"] = TRGOBJ_V;
 
   return dict;
 }

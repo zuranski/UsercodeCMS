@@ -107,6 +107,7 @@ beginJob() {
 
         EXPAND(GENJET_V, std::vector<genjet>, "");
         EXPAND(DJCANDIDATE_V, std::vector<djcandidate>, "");
+        EXPAND(TRGOBJ_V, std::vector<trgobj>, "");
 #undef EXPAND
       default: 
 	{

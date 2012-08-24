@@ -9,8 +9,8 @@ TrackPtCut_(iConfig.getParameter<double>("TrackPtCut")),
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 vtxfitter_(vtxconfig_) {
 
-  produces <std::vector<djcandidate> > ("singlejet");
-  produces <std::vector<djcandidate> > ("doublejet");
+  produces <std::vector<djcandidate> > ("singlejets");
+  produces <std::vector<djcandidate> > ("doublejets");
 
 }
 
@@ -18,14 +18,14 @@ void
 DJ_DisplacedJets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
-   std::auto_ptr<std::vector<djcandidate> > singlejet ( new std::vector<djcandidate>() );
-   std::auto_ptr<std::vector<djcandidate> > doublejet ( new std::vector<djcandidate>() );
+   std::auto_ptr<std::vector<djcandidate> > singlejets ( new std::vector<djcandidate>() );
+   std::auto_ptr<std::vector<djcandidate> > doublejets ( new std::vector<djcandidate>() );
 
    GetEventInfo(iEvent,iSetup);
-   LoopPFJets(iEvent,iSetup,*singlejet.get(),*doublejet.get());
+   LoopPFJets(iEvent,iSetup,*singlejets.get(),*doublejets.get());
 
-   iEvent.put(singlejet, "singlejet" );
-   iEvent.put(doublejet, "doublejet" );
+   iEvent.put(singlejets, "singlejets" );
+   iEvent.put(doublejets, "doublejets" );
 
 }
 
@@ -144,7 +144,7 @@ void DJ_DisplacedJets::DoVertexing(const edm::EventSetup& iSetup, djcandidate &d
 }
 
 
-void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetup& iSetup, std::vector<djcandidate> &singlejet, std::vector<djcandidate> &doublejet){
+void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetup& iSetup, std::vector<djcandidate> &singlejets, std::vector<djcandidate> &doublejets){
 
    edm::Handle<std::vector<pat::Jet> > patJetsHandle;
    iEvent.getByLabel(patJetCollectionTag_,patJetsHandle);
@@ -164,6 +164,9 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
      djc.eta = j->eta();
      djc.phi = j->phi();
      djc.mass = j->mass();
+ 
+     djc.nConstituents = j->nConstituents();
+     std::cout << j->nConstituents() << " " << j->numberOfDaughters() << std::endl;
 
      djc.chgHadFrac = j->chargedHadronEnergyFraction();
      djc.chgHadN = j->chargedHadronMultiplicity();
@@ -283,26 +286,26 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
      djc.vtxZ = -1;
 
      djc.disptracks = tracks_;
-     singlejet.push_back(djc);
+     singlejets.push_back(djc);
      PFJetDispTracks.push_back(disptrks);
      PFJetDisp.push_back(*j);
 
   }
 
   // single candidates
-  for (unsigned int i=0;i<singlejet.size();i++){
-    DoVertexing(iSetup,singlejet.at(i),PFJetDispTracks.at(i));
+  for (unsigned int i=0;i<singlejets.size();i++){
+    DoVertexing(iSetup,singlejets.at(i),PFJetDispTracks.at(i));
   }
 
   // double candidates
-  if (singlejet.size()>1){
-     for (size_t i=0;i<singlejet.size()-1;i++){
-       for (size_t j=i+1;j<singlejet.size();j++){
+  if (singlejets.size()>1){
+     for (size_t i=0;i<singlejets.size()-1;i++){
+       for (size_t j=i+1;j<singlejets.size();j++){
 
          pat::Jet j1 = PFJetDisp.at(i);
          pat::Jet j2 = PFJetDisp.at(j);
-         djcandidate djc1 = singlejet.at(i);
-         djcandidate djc2 = singlejet.at(j);
+         djcandidate djc1 = singlejets.at(i);
+         djcandidate djc2 = singlejets.at(j);
 
          std::vector<reco::TransientTrack> disptrks = PFJetDispTracks.at(i);
          std::vector<reco::TransientTrack> disptrks2 = PFJetDispTracks.at(j);
@@ -334,6 +337,8 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
          djc.eta = p4.eta();
          djc.phi = p4.phi();
          djc.mass = p4.mass();
+
+         djc.nConstituents = djc1.nConstituents + djc2.nConstituents;
 
 	 GlobalVector direction(p4.px(), p4.py(), p4.pz());
          direction = direction.unit();
@@ -372,7 +377,7 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
 
          djc.disptracks=tracks_;
          DoVertexing(iSetup,djc,disptrks);
-         doublejet.push_back(djc);
+         doublejets.push_back(djc);
        }
      }
    }

@@ -11,7 +11,7 @@ struct djcandidate {
    double truelxy;
    double phFrac,neuHadFrac,chgHadFrac,eleFrac,muFrac,PromptEnergyFrac;
    int phN,neuHadN,chgHadN,eleN,muN;
-   int nDispTracks,nPrompt;
+   int nDispTracks,nPrompt,nConstituents;
    double lxy,lxysig,vtxmass,vtxpt,vtxX,vtxY,vtxZ,vtxchi2,vtxCharge,vtxdR,vtxN;
    std::vector<track> disptracks;
 

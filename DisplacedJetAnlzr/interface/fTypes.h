@@ -10,6 +10,7 @@
 #include "Math/Point3D.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/djcandidate.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/trgobj.h"
 
 struct fTypes {
 
@@ -41,7 +42,7 @@ struct fTypes {
 		 POINTD_V, VECTORD_V,
 		 POINTF, POINTF_V, VECTORF, VECTORF_V,
 		 STRING,     STRING_BOOL_M, STRING_INT_M, STRING_STRING_M, 
-		 GENJET_V, DJCANDIDATE_V};
+		 GENJET_V, DJCANDIDATE_V, TRGOBJ_V};
 
   static std::map<std::string,LEAFTYPE> dict();
 };
