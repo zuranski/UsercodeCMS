@@ -166,7 +166,6 @@ void DJ_DisplacedJets::LoopPFJets(const edm::Event& iEvent, const edm::EventSetu
      djc.mass = j->mass();
  
      djc.nConstituents = j->nConstituents();
-     std::cout << j->nConstituents() << " " << j->numberOfDaughters() << std::endl;
 
      djc.chgHadFrac = j->chargedHadronEnergyFraction();
      djc.chgHadN = j->chargedHadronMultiplicity();
