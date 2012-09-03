@@ -27,12 +27,14 @@ class DJ(object) :
 
     def common(self) :
         for module in ((['PileupSummary','GenEvent'] if not self.options.isData else [])+
-		       ['Triggers','TriggerObjects','EventFilters','Event','DisplacedJets']) :
+		       ['Triggers','TriggerObjects','EventFilters','Event','Jets','DiJets']+
+		       ['JetVertices','DiJetVertices']) :
 	    print module
             self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
 
         return (  self.evalSequence('dj%s',((['pileupsummary','genevent'] if not self.options.isData else []) +
-					   ['triggers','triggerobjects','eventfilters','event','displacedjets']  )
+					   ['triggers','triggerobjects','eventfilters','event','jets','dijets']+
+                                           ['jetvertices','dijetvertices'])
                                    )
                )
 

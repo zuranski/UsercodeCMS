@@ -73,15 +73,7 @@ beginJob() {
 	EXPAND( DOUBLE,         double, "/D");
 	EXPAND(   LONG,           long, "/L");
 	EXPAND( U_LONG,  unsigned long, "/l");
-
 	EXPAND(   STRING,            std::string, "");
-	EXPAND(   POINTF,         fTypes::fPoint, "");
-	EXPAND(   POINTD,         fTypes::dPoint, "");
-	EXPAND(  VECTORF,        fTypes::fVector, "");
-	EXPAND(  VECTORD,        fTypes::dVector, "");
-	EXPAND(LORENTZVD,   fTypes::dXYZLorentzV, "");
-	EXPAND(LORENTZVF, fTypes::fPolarLorentzV, "");
-	EXPAND(LORENTZVP, fTypes::dPolarLorentzV, "");
 
 	EXPAND(   BOOL_V, std::vector<          bool>, "");
 	EXPAND(    INT_V, std::vector<           int>, "");
@@ -92,22 +84,12 @@ beginJob() {
 	EXPAND( DOUBLE_V, std::vector<        double>, "");
 	EXPAND(   LONG_V, std::vector<          long>, "");
 	EXPAND( U_LONG_V, std::vector< unsigned long>, "");
-
-	EXPAND(   POINTF_V, std::vector        <fTypes::fPoint>, "");
-	EXPAND(   POINTD_V, std::vector        <fTypes::dPoint>, "");
-	EXPAND(  VECTORF_V, std::vector       <fTypes::fVector>, "");
-	EXPAND(  VECTORD_V, std::vector       <fTypes::dVector>, "");
-	EXPAND(LORENTZVD_V, std::vector  <fTypes::dXYZLorentzV>, "");
-	EXPAND(LORENTZVP_V, std::vector<fTypes::dPolarLorentzV>, "");
-	EXPAND(LORENTZVF_V, std::vector<fTypes::fPolarLorentzV>, "");
+	EXPAND( STRING_V, std::vector<   std::string>, "");
 
 	EXPAND(  STRING_BOOL_M, fTypes::mapStringBool   , "");
 	EXPAND(   STRING_INT_M, fTypes::mapStringInt    , "");
 	EXPAND(STRING_STRING_M, fTypes::mapStringString , "");
 
-        EXPAND(GENJET_V, std::vector<genjet>, "");
-        EXPAND(DJCANDIDATE_V, std::vector<djcandidate>, "");
-        EXPAND(TRGOBJ_V, std::vector<trgobj>, "");
 #undef EXPAND
       default: 
 	{

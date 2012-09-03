@@ -1,11 +1,10 @@
-#ifndef DJ_DISPLACEDJETS
-#define DJ_DISPLACEDJETS
+#ifndef DJ_DIJETVERTICEsS
+#define DJ_DIJETVERTICESS
 
 #include "FWCore/Framework/interface/EDProducer.h"
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-
-//My Data Formats
-#include "MyAnalysis/DisplacedJetAnlzr/interface/djcandidate.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 //Data Formats and Tools 
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
@@ -20,24 +19,23 @@
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 
-class DJ_DisplacedJets : public edm::EDProducer {
+#include "MyAnalysis/DisplacedJetAnlzr/interface/helpers.h"
+
+class DJ_DiJetVertices : public edm::EDProducer {
    public:
-      explicit DJ_DisplacedJets(const edm::ParameterSet&);
+      explicit DJ_DiJetVertices(const edm::ParameterSet&);
 
    private:
       virtual void produce(edm::Event&, const edm::EventSetup&);
 
       void GetMothers(const HepMC::GenParticle *p, std::vector<std::pair<int,double> > &moms);
-      void ClearEventData();
       void GetEventInfo(const edm::Event&, const edm::EventSetup&);
-      void LoopPFJets(const edm::Event&, const edm::EventSetup&, std::vector<djcandidate> &, std::vector<djcandidate> &);
-      void DoVertexing(const edm::EventSetup&, djcandidate &djc, std::vector<reco::TransientTrack> disptrks);
 
 
       // configurables
       const edm::InputTag patJetCollectionTag_;
       bool useTrackingParticles_;
-      double PromptTrackDxyCut_,TrackPtCut_;
+      double PromptTrackDxyCut_,TrackPtCut_,vtxWeight_;
       const edm::ParameterSet vtxconfig_;
       ConfigurableVertexFitter vtxfitter_;
 

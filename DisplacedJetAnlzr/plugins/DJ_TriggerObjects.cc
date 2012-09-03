@@ -5,13 +5,21 @@ DJ_TriggerObjects::DJ_TriggerObjects(const edm::ParameterSet& iConfig) :
     ObjectsToStore (iConfig.getParameter<std::vector<std::string> >("ObjectsToStore"))
 {
   
-  produces <std::vector<trgobj> >           ( "trgobjs");
+  produces <std::vector<float> >           ( "trgobjPt");
+  produces <std::vector<float> >           ( "trgobjEta");
+  produces <std::vector<float> >           ( "trgobjPhi");
+  produces <std::vector<float> >           ( "trgobjMass");
+  produces <std::vector<std::string> >           ( "trgobjTag");
 
 }
 
 void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   
-  std::auto_ptr<std::vector<trgobj> > trgobjs ( new std::vector<trgobj> );
+  std::auto_ptr<std::vector<float> > trgobjPt ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > trgobjEta ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > trgobjPhi ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > trgobjMass ( new std::vector<float> );
+  std::auto_ptr<std::vector<std::string> > trgobjTag ( new std::vector<std::string> );
   
   edm::Handle<trigger::TriggerEvent> triggerEvent;
   iEvent.getByLabel( inputTag , triggerEvent);
@@ -64,10 +72,8 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
       for (int iTriggerObject = 0; iTriggerObject < nKeys; ++iTriggerObject ) { 
 
-        trgobj tobj;
 
 	// Get the object ID and key
-	int                id  = vids[iTriggerObject];
 	trigger::size_type key = keys[iTriggerObject];
 
 	// Get the trigger object from the key
@@ -75,14 +81,11 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 	const trigger::TriggerObject & triggerObject = triggerObjects [key];
 	
 	// Store the trigger object as a TLorentzVector (borrowed from S. Harper)
-        tobj.tag = name;
-        tobj.id = id;
-        tobj.pt = triggerObject.pt();
-        tobj.eta = triggerObject.eta();
-        tobj.phi = triggerObject.phi();
-        tobj.mass = triggerObject.mass();
-
-        trgobjs->push_back(tobj);
+        trgobjTag->push_back(name);
+        trgobjPt->push_back(triggerObject.pt());
+        trgobjEta->push_back(triggerObject.eta());
+        trgobjPhi->push_back(triggerObject.phi());
+        trgobjMass->push_back(triggerObject.mass());
 
       } // end loop over keys/trigger objects passing filters
 
@@ -95,7 +98,11 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
   // Push the information into the event
   //------------------------------------------------------------------------
 
-  iEvent.put ( trgobjs, "trgobjs" ) ;
+  iEvent.put ( trgobjPt, "trgobjPt" ) ;
+  iEvent.put ( trgobjEta, "trgobjEta" ) ;
+  iEvent.put ( trgobjPhi, "trgobjPhi" ) ;
+  iEvent.put ( trgobjMass, "trgobjMass" ) ;
+  iEvent.put ( trgobjTag, "trgobjTag" ) ;
 	      
 
 }

@@ -10,8 +10,6 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
-#include "MyAnalysis/DisplacedJetAnlzr/interface/trgobj.h"
-
 class DJ_TriggerObjects : public edm::EDProducer {
  public:
   explicit DJ_TriggerObjects(const edm::ParameterSet&);

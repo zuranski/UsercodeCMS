@@ -1,24 +1,4 @@
 <lcgdict>
-  <class name="track"/>
-  <class name="edm::Wrapper<track>"/>
-  <class name="std::vector<track>"/>
-  <class name="edm::Wrapper<std::vector<track> >"/>
-
-  <class name="genjet"/>
-  <class name="edm::Wrapper<genjet>"/>
-  <class name="std::vector<genjet>"/>
-  <class name="edm::Wrapper<std::vector<genjet> >"/>
-  
-  <class name="djcandidate"/>
-  <class name="edm::Wrapper<djcandidate>"/>
-  <class name="std::vector<djcandidate>"/>
-  <class name="edm::Wrapper<std::vector<djcandidate> >"/>
-
-  <class name="trgobj"/>
-  <class name="edm::Wrapper<trgobj>"/>
-  <class name="std::vector<trgobj>"/>
-  <class name="edm::Wrapper<std::vector<trgobj> >"/>
-
   <class name="std::map<std::string,bool>"/>
   <class name="edm::Wrapper<std::map<std::string,bool> >"/>
 
@@ -28,5 +8,4 @@
   <class name="std::map<std::string,std::string>"/>
   <class name="edm::Wrapper<std::map<std::string,std::string> >"/>
 
-  <class name="ROOT::Math::PtEtaPhiM4D<float>"/>
 </lcgdict>

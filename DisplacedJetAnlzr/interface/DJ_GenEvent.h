@@ -8,8 +8,6 @@
 #include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 
-#include "MyAnalysis/DisplacedJetAnlzr/interface/genjet.h"
-
 class DJ_GenEvent : public edm::EDProducer {
  public: 
   explicit DJ_GenEvent(const edm::ParameterSet&);

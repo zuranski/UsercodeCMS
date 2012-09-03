@@ -1,13 +1,21 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_GenEvent.h"
 
 DJ_GenEvent::DJ_GenEvent(const edm::ParameterSet& iConfig) {
-  produces <std::vector<genjet> >         ( "gjets"  );
+  produces <std::vector<float> >         ( "genjetPt"  );
+  produces <std::vector<float> >         ( "genjetEta"  );
+  produces <std::vector<float> >         ( "genjetPhi"  );
+  produces <std::vector<float> >         ( "genjetLxy"  );
+  produces <std::vector<float> >         ( "genjetCtau"  );
 }
 
 void DJ_GenEvent::
 produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
-  std::auto_ptr<std::vector<genjet> > gjets ( new std::vector<genjet> );
+  std::auto_ptr<std::vector<float> > genjetPt ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genjetEta ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genjetPhi ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genjetLxy ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genjetCtau ( new std::vector<float> );
 
   try {
 
@@ -27,20 +35,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         for(HepMC::GenVertex::particles_out_const_iterator pout = Xvtx->particles_out_const_begin(); pout != Xvtx->particles_out_const_end(); pout++){
           if ((*pout)->pdg_id()>6) continue;
  
-          genjet gj;
-
           HepMC::GenParticle *q = *pout;
           reco::Candidate::LorentzVector qp4(q->momentum());
           reco::Candidate::LorentzVector qx4(q->end_vertex()->position());
 
-          gj.pt = qp4.pt();
-          gj.phi = qp4.phi();
-          gj.eta = qp4.eta();
-          gj.lxy = qx4.Pt();
-          gj.ctau = qx4.P()*exop4.mass()/exop4.P();
+          genjetPt->push_back(qp4.pt());
+          genjetPhi->push_back(qp4.phi());
+          genjetEta->push_back(qp4.eta());
+          genjetLxy->push_back(qx4.Pt());
+          genjetCtau->push_back(qx4.P()*exop4.mass()/exop4.P());
         
-          gjets->push_back(gj);
-
         }
       }
     }
@@ -49,6 +53,10 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     edm::LogError("DJ_GenEvent") << e.what();
   }
 
-  iEvent.put( gjets,   "gjets"   );
+  iEvent.put( genjetPt,   "genjetPt"   );
+  iEvent.put( genjetEta,   "genjetEta"   );
+  iEvent.put( genjetPhi,   "genjetPhi"   );
+  iEvent.put( genjetLxy,   "genjetLxy"   );
+  iEvent.put( genjetCtau,   "genjetCtau"   );
 
 }
