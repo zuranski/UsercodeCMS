@@ -58,15 +58,17 @@ class helpers {
     return bestcluster;
   } 
 
-  void printvec(std::vector<float> vec){
+  template <typename T>
+  void printvec(std::vector<T> vec){
     for (size_t i=0;i<vec.size();i++) std::cout << vec[i] << " ";
     std::cout << std::endl;
   }
-
-  void printvecvec(std::vector<std::vector<float> > vecvec){
+ 
+  template <typename T> 
+  void printvecvec(std::vector<std::vector<T> > vecvec){
 
     for (size_t i=0;i<vecvec.size();i++){
-      std::vector<float> vec = vecvec[i];
+      std::vector<T> vec = vecvec[i];
       printvec(vec);
     }
   }

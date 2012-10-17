@@ -92,6 +92,13 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      //tracks selection
      reco::TrackRefVector dijettrks = jet1.associatedTracks();
      reco::TrackRefVector dijettrks2 = jet2.associatedTracks();
+
+     ////TO REMOVE
+     std::vector<int> indices1(dijettrks.size());
+     std::vector<int> indices2(dijettrks2.size());
+     std::fill(indices1.begin(),indices1.end(),1);
+     std::fill(indices2.begin(),indices2.end(),2);
+
      for(size_t j=0;j<dijettrks2.size();j++) dijettrks.push_back(dijettrks2[j]);
      //indices for jet1 and jet 2
      std::vector<int> indices(dijettrks.size());
@@ -166,7 +173,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
  	 vtxP4 += ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.13957018);
          charge+=t_trk.track().charge();
          if (indicesToVertex[j] == 1) VtxN1+=1;
-         if (indicesToVertex[j] == 2) VtxN2+=2;
+         if (indicesToVertex[j] == 2) VtxN2+=1;
          if (ip2dsToVertex[j]>0) nposip2d+=1;
          // hitPattern
          CheckHitPattern::Result res = checkHitPattern_.analyze(iSetup,t_trk.track(),jvtx.vertexState());

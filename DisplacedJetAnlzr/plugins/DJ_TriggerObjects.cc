@@ -52,7 +52,8 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
       std::string name = triggerEvent -> filterTag ( iFilter ).label();
       bool interestingObject = false;
       for(size_t i=0;i<ObjectsToStore.size();i++){
-        if (name.find(ObjectsToStore[i]) != std::string::npos){
+        //if (name.find(ObjectsToStore[i]) != std::string::npos){
+        if (name==ObjectsToStore[i]){
           interestingObject = true;
           break; 
         }

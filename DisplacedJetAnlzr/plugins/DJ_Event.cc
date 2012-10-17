@@ -1,6 +1,7 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_Event.h"
 
-DJ_Event::DJ_Event(const edm::ParameterSet& iConfig) {
+DJ_Event::DJ_Event(const edm::ParameterSet& iConfig):
+patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag")) {
   produces <bool>         ( "isRealData"  );
   produces <unsigned int> ( "run"   );
   produces <unsigned int> ( "event" );
@@ -10,6 +11,7 @@ DJ_Event::DJ_Event(const edm::ParameterSet& iConfig) {
   produces <double>       ( "time" );
   produces <unsigned int> ( "nPV" );
   produces <unsigned int> ( "nTrks" );
+  produces <float> ( "pfHT" );
 }
 
 void DJ_Event::
@@ -36,6 +38,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.getByLabel("generalTracks",generalTracks);
   std::auto_ptr<unsigned int> nTrks ( new unsigned int(generalTracks->size() ) );
 
+  edm::Handle<std::vector<pat::Jet> > patJetsHandle;
+  iEvent.getByLabel(patJetCollectionTag_,patJetsHandle);
+
+  float ht=0;
+  for (size_t i=0;i<patJetsHandle->size();i++){
+    pat::Jet j = patJetsHandle->at(i);
+    ht+=j.et();
+  }
+  std::auto_ptr<float> pfHT ( new float(ht) );
+
   iEvent.put( isRealData, "isRealData" );
   iEvent.put( run,   "run"   );
   iEvent.put( event, "event" );
@@ -45,4 +57,5 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( time,  "time"  );
   iEvent.put( nPV,   "nPV"   );
   iEvent.put( nTrks, "nTrks" );
+  iEvent.put( pfHT, "pfHT"   );
 }

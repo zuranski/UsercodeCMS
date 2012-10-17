@@ -38,3 +38,8 @@ II. CMSSW DEPENDENCIES
 III. NOTES
 
  -- CMSSW_4_4_4
+
+ Creating config file for test running or CRAB submission:
+ - for background MC: python DJ_cfg.py isData=0 quiet=0/1 output=ntupleq maxEvents=1000
+ - for signal MC: python DJ_cfg.py isData=0 quiet=0/1 signal=u/n output=ntupleu/b maxEvents=1000
+ - for data: python DJ_cfg.py isData=1 quiet=0/1 output=ntupled maxEvents=1000

@@ -11,6 +11,7 @@ class DJ(object) :
                          *self.HbheNoiseFilterResult()
 			 #*self.MetFilterFlags()
                          *self.Pat()
+                         *self.JetSelector()
                          *self.common() 
                          * self.tree() )
     
@@ -71,11 +72,22 @@ class DJ(object) :
 			    jetIdLabel = 'ak5pf'
                        )
 
-        self.process.selectedPatJets.cut = cms.string("pt > 40 & abs(eta) < 2.0 && neutralHadronEnergyFraction < 0.9 && neutralEmEnergyFraction < 0.90 && chargedHadronEnergyFraction>0 && chargedHadronMultiplicity > 0 && chargedEmEnergyFraction < 0.99 && nConstituents > 2")
+        self.process.selectedPatJets.cut = cms.string("pt > 40 && \
+                                                       abs(eta) < 3.0 && \
+                                                       neutralHadronEnergyFraction < 0.9 && \
+                                                       neutralEmEnergyFraction < 0.90 && \
+                                                       nConstituents > 1 && \
+                                                       (? abs(eta)<2.4 ? chargedHadronEnergyFraction : 1) > 0 && \
+                                                       (? abs(eta)<2.4 ? chargedHadronMultiplicity : 1) > 0 && \
+                                                       (? abs(eta)<2.4 ? chargedEmEnergyFraction : 0) < 0.99")
 
         del self.process.out
         del self.process.outpath
 	return self.process.patDefaultSequence
+
+    def JetSelector(self):
+        self.process.load("MyAnalysis/DisplacedJetAnlzr/JetSelector_cfi")
+        return (cms.Sequence(self.process.trackerPatJets))
 
     def HbheNoiseFilterResult(self) :
         self.process.load('CommonTools/RecoAlgos/HBHENoiseFilterResultProducer_cfi')
