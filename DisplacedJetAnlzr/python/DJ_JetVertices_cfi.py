@@ -6,6 +6,7 @@ djjetvertices = cms.EDProducer('DJ_JetVertices',
     useTrackingParticles = cms.bool(True),
     PromptTrackDxyCut = cms.double(0.05), # 500 microns
     TrackPtCut = cms.double(1.),
+    TrackingEfficiencyFactor = cms.double(1.),
     vtxWeight = cms.double(0.5),
     vertexfitter = cms.PSet(
         fitter = cms.string('avf')

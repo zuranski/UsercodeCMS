@@ -5,6 +5,7 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
 useTrackingParticles_(iConfig.getParameter<bool>("useTrackingParticles")),
 PromptTrackDxyCut_(iConfig.getParameter<double>("PromptTrackDxyCut")),
 TrackPtCut_(iConfig.getParameter<double>("TrackPtCut")),
+TrackingEfficiencyFactor_(iConfig.getParameter<double>("TrackingEfficiencyFactor")),
 vtxWeight_(iConfig.getParameter<double>("vtxWeight")),
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 vtxfitter_(vtxconfig_) {
@@ -126,6 +127,9 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
           PromptEnergy += sqrt(0.1396*0.1396 + trk->p()*trk->p());
           continue;
         }
+	// tracking inefficiency factor
+	if (rand()/float(RAND_MAX) > TrackingEfficiencyFactor_) continue;
+
         float r = 100*3.3*trk->pt()/3.8;
         float guesslxy = ip2d.value()/sin(trk->phi()-direction.phi())*(1-2.5*fabs(ip2d.value())/r);
 
