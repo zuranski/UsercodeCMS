@@ -73,15 +73,16 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
 
       for (int iTriggerObject = 0; iTriggerObject < nKeys; ++iTriggerObject ) { 
 
-
 	// Get the object ID and key
+
 	trigger::size_type key = keys[iTriggerObject];
 
 	// Get the trigger object from the key
 
 	const trigger::TriggerObject & triggerObject = triggerObjects [key];
-	
+
 	// Store the trigger object as a TLorentzVector (borrowed from S. Harper)
+
         trgobjTag->push_back(name);
         trgobjPt->push_back(triggerObject.pt());
         trgobjEta->push_back(triggerObject.eta());

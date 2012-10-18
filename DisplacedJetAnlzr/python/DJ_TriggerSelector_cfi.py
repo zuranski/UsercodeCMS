@@ -4,8 +4,7 @@ paths = [
          'HLT_HT250_DoubleDisplacedJet60_v*', #2011 Run A
          'HLT_HT250_DoubleDisplacedJet60_PromptTrack_v*',#2011 Run B
          'HLT_HT200_v*',#2011
-         'HLT_HT250_v*',#2011
-         #'HLT_HT250_v*',#2012
+         'HLT_HT250_v*',#2011,2012
          #'HLT_HT300_v*',#2012
          #'HLT_HT300_DoubleDisplacedPFJet60_v*',#2012 7e33
 	 #'HLT_HT300_DoubleDisplacedPFJet60_ChgFraction10_v*', #2012 7e33
