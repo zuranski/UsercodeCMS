@@ -43,3 +43,7 @@ III. NOTES
  - for background MC: python DJ_cfg.py isData=0 quiet=0/1 output=ntupleq maxEvents=1000
  - for signal MC: python DJ_cfg.py isData=0 quiet=0/1 signal=u/n output=ntupleu/b maxEvents=1000
  - for data: python DJ_cfg.py isData=1 quiet=0/1 output=ntupled maxEvents=1000
+
+ Remark regarding trigger paths and trigger objects:
+ - TriggerResults contains only the triggers which fired online, a prescaled paths may show 0 even if they potentially could trigger.
+ - on every stored event all trigger paths are run, therefore corresponding TriggerObjects will be built and trigger decisions from prescaled triggers might be obtained from TriggerObjects.

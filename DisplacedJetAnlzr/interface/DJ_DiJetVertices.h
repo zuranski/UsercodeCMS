@@ -30,7 +30,7 @@ class DJ_DiJetVertices : public edm::EDProducer {
 
       void GetMothers(const HepMC::GenParticle *p, std::vector<std::pair<int,double> > &moms);
       void GetEventInfo(const edm::Event&, const edm::EventSetup&);
-
+      reco::Candidate::LorentzVector detectorP4(pat::Jet &jet, reco::Vertex &vtx, TransientVertex &tvtx, int CorrectTracks);
 
       // configurables
       const edm::InputTag patJetCollectionTag_;

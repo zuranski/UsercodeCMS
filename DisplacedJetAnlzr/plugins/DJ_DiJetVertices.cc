@@ -10,6 +10,10 @@ vtxWeight_(iConfig.getParameter<double>("vtxWeight")),
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 vtxfitter_(vtxconfig_) {
 
+   produces<std::vector<float> > ("dijetCorrPt");
+   produces<std::vector<float> > ("dijetCorrEta");
+   produces<std::vector<float> > ("dijetCorrPhi");
+   produces<std::vector<float> > ("dijetCorrMass");
    produces<std::vector<int> > ("dijetNPromptTracks");
    produces<std::vector<int> > ("dijetNDispTracks");
    produces<std::vector<float> > ("dijetPromptEnergyFrac");
@@ -45,7 +49,11 @@ vtxfitter_(vtxconfig_) {
 void
 DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
-
+ 
+   std::auto_ptr<std::vector<float> > dijetCorrPt ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > dijetCorrEta ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > dijetCorrPhi ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > dijetCorrMass ( new std::vector<float> );
    std::auto_ptr<std::vector<int> > dijetNPromptTracks ( new std::vector<int> );
    std::auto_ptr<std::vector<int> > dijetNDispTracks ( new std::vector<int> );
    std::auto_ptr<std::vector<float> > dijetPromptEnergyFrac ( new std::vector<float> );
@@ -203,6 +211,23 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
      float dR = deltaR(direction.eta(),direction.phi(),vtxP4.eta(),vtxP4.phi());
 
+     reco::Candidate::LorentzVector physicsP4;
+     //reco::Candidate::LorentzVector physicsP41,physicsP42,physicsP43;
+     if (goodVtx){
+       // corrected P4
+       physicsP4 = jet1.physicsP4(vtx.position(),jet1,jet1.vertex())
+                                                 +jet2.physicsP4(vtx.position(),jet2,jet2.vertex());
+
+       //physicsP41 = detectorP4(jet1,vtx,jvtx,0) + detectorP4(jet2,vtx,jvtx,0);
+       //physicsP42 = detectorP4(jet1,vtx,jvtx,1) + detectorP4(jet2,vtx,jvtx,1);
+       //physicsP43 = detectorP4(jet1,vtx,jvtx,2) + detectorP4(jet2,vtx,jvtx,2);
+     }
+
+     dijetCorrPt->push_back(goodVtx ? physicsP4.Pt() : -1);
+     dijetCorrEta->push_back(goodVtx ? physicsP4.Eta() : -1);
+     dijetCorrPhi->push_back(goodVtx ? physicsP4.Phi() : -1);
+     dijetCorrMass->push_back(goodVtx ? physicsP4.M() : -1);
+
      dijetLxy->push_back(goodVtx ? lxy : -1);
      dijetLxysig->push_back(goodVtx ? sig : -1);
      dijetVtxX->push_back(goodVtx ? vtx.position().x() : 999);
@@ -241,6 +266,10 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    } 
   }// dijet loop
 
+  iEvent.put(dijetCorrPt,"dijetCorrPt");
+  iEvent.put(dijetCorrEta,"dijetCorrEta");
+  iEvent.put(dijetCorrPhi,"dijetCorrPhi");
+  iEvent.put(dijetCorrMass,"dijetCorrMass");
   iEvent.put(dijetNPromptTracks, "dijetNPromptTracks");
   iEvent.put(dijetNDispTracks, "dijetNDispTracks");
   iEvent.put(dijetPromptEnergyFrac, "dijetPromptEnergyFrac");
@@ -273,6 +302,33 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
 }
 
+
+reco::Candidate::LorentzVector DJ_DiJetVertices::detectorP4(pat::Jet &jet, reco::Vertex &vtx, TransientVertex &tvtx, int CorrectTracks=0){
+
+  reco::Candidate::LorentzVector P4;
+  // correct track momentas with pca to the vertex
+  const std::vector<reco::PFCandidatePtr> & parts = jet.getPFConstituents();
+  for(std::vector<reco::PFCandidatePtr>::const_iterator part = parts.begin(); part!= parts.end(); ++part){
+    const reco::PFCandidate *pfCand = part->get();
+    if (pfCand->charge() == 0){
+      P4 += reco::Jet::physicsP4(vtx.position(),*pfCand,pfCand->vertex());
+    } else {
+      if (CorrectTracks == 0) P4 += pfCand->p4();
+      else if (CorrectTracks == 1) {
+        P4 += reco::Jet::physicsP4(vtx.position(),*pfCand,pfCand->vertex());
+      }
+      else if (CorrectTracks == 2){
+        if (pfCand->trackRef().isNull()) continue;
+        reco::TransientTrack t_trk = theB->build(pfCand->trackRef());
+        //const reco::Track *trk = pfCand->trackRef().get();
+        GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(tvtx.position()).momentum();
+        P4 += ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),pfCand->mass());
+      }
+    }
+  }
+
+  return P4;
+}
 
 void DJ_DiJetVertices::GetEventInfo(const edm::Event& iEvent, const edm::EventSetup& iSetup){
 

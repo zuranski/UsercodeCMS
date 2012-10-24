@@ -10,6 +10,10 @@ vtxWeight_(iConfig.getParameter<double>("vtxWeight")),
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 vtxfitter_(vtxconfig_) {
 
+   produces<std::vector<float> > ("jetCorrPt");
+   produces<std::vector<float> > ("jetCorrEta");
+   produces<std::vector<float> > ("jetCorrPhi");
+   produces<std::vector<float> > ("jetCorrMass");
    produces<std::vector<int> > ("jetNPromptTracks");
    produces<std::vector<int> > ("jetNDispTracks");
    produces<std::vector<float> > ("jetPromptEnergyFrac");
@@ -44,6 +48,10 @@ void
 DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
+   std::auto_ptr<std::vector<float> > jetCorrPt ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > jetCorrEta ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > jetCorrPhi ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > jetCorrMass ( new std::vector<float> );
    std::auto_ptr<std::vector<int> > jetNPromptTracks ( new std::vector<int> );
    std::auto_ptr<std::vector<int> > jetNDispTracks ( new std::vector<int> );
    std::auto_ptr<std::vector<float> > jetPromptEnergyFrac ( new std::vector<float> );
@@ -177,6 +185,16 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      } // tracks to Vertex
 
      float dR = deltaR(direction.eta(),direction.phi(),vtxP4.eta(),vtxP4.phi());
+     // corrected P4
+     reco::Candidate::LorentzVector physicsP4;
+     if (goodVtx){
+       physicsP4 = jet.physicsP4(vtx.position(),jet,jet.vertex());
+     }
+
+     jetCorrPt->push_back(goodVtx ? physicsP4.Pt() : -1);
+     jetCorrEta->push_back(goodVtx ? physicsP4.Eta() : -1);
+     jetCorrPhi->push_back(goodVtx ? physicsP4.Phi() : -1);
+     jetCorrMass->push_back(goodVtx ? physicsP4.M() : -1);
 
      jetLxy->push_back(goodVtx ? lxy : -1);
      jetLxysig->push_back(goodVtx ? sig : -1);
@@ -213,6 +231,10 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    } // jet loop
 
+  iEvent.put(jetCorrPt,"jetCorrPt");
+  iEvent.put(jetCorrEta,"jetCorrEta");
+  iEvent.put(jetCorrPhi,"jetCorrPhi");
+  iEvent.put(jetCorrMass,"jetCorrMass");
   iEvent.put(jetNPromptTracks, "jetNPromptTracks");
   iEvent.put(jetNDispTracks, "jetNDispTracks");
   iEvent.put(jetPromptEnergyFrac, "jetPromptEnergyFrac");
