@@ -42,6 +42,8 @@ vtxfitter_(vtxconfig_) {
    produces<std::vector<float> > ("dijetglxyrmsclr");
    produces<std::vector<int> > ("dijetNclusters");
    produces<std::vector<int> > ("dijetbestclusterN");
+   produces<std::vector<int> > ("dijetbestclusterN1");
+   produces<std::vector<int> > ("dijetbestclusterN2");
    produces<std::vector<float> > ("dijetbestclusterlxy");
 
 }
@@ -82,6 +84,8 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::auto_ptr<std::vector<float> > dijetglxyrmsclr ( new std::vector<float> );
    std::auto_ptr<std::vector<int> > dijetNclusters ( new std::vector<int> );
    std::auto_ptr<std::vector<int> > dijetbestclusterN ( new std::vector<int> );
+   std::auto_ptr<std::vector<int> > dijetbestclusterN1 ( new std::vector<int> );
+   std::auto_ptr<std::vector<int> > dijetbestclusterN2 ( new std::vector<int> );
    std::auto_ptr<std::vector<float> > dijetbestclusterlxy ( new std::vector<float> );
 
    GetEventInfo(iEvent,iSetup);
@@ -257,11 +261,29 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      std::vector<std::vector<float> > clusters = help.clusters(glxysToVertex,0.15*lxy);
      std::vector<float> bestcluster = help.bestcluster(clusters,lxy);
 
+     int clrN1=0;
+     int clrN2=0;
+     for (size_t l=0;l<bestcluster.size();l++){
+       float glxy = bestcluster[l];
+       for (size_t m=0;m<glxysToVertex.size();m++)
+         if(fabs(glxy-glxysToVertex[m])<1e-5){
+           if (indicesToVertex[m]==1) clrN1++;
+           else clrN2++;
+           break;
+       }
+     }
+
+     if(goodVtx)
+       std::cout << clrN1 << " " << clrN2 << " " << bestcluster.size() << std::endl;
+
+
      dijetglxyrmsclr->push_back(goodVtx ? help.RMS(bestcluster,lxy) : -1);
      dijetglxydistclr->push_back(goodVtx ? help.AvgDistance(bestcluster,lxy) : -1);
      dijetNclusters->push_back(goodVtx ? help.Nclusters(clusters) : -1);
      dijetbestclusterlxy->push_back(goodVtx ? ( (bestcluster.size()>0 ) ? help.Avg(bestcluster)/lxy : -1) : -1);
      dijetbestclusterN->push_back(goodVtx ? bestcluster.size() : -1);
+     dijetbestclusterN1->push_back(goodVtx ? clrN1 : -1);
+     dijetbestclusterN2->push_back(goodVtx ? clrN2 : -1);
 
    } 
   }// dijet loop
@@ -298,6 +320,8 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.put(dijetglxyrmsclr,"dijetglxyrmsclr");
   iEvent.put(dijetNclusters,"dijetNclusters");
   iEvent.put(dijetbestclusterN,"dijetbestclusterN");
+  iEvent.put(dijetbestclusterN1,"dijetbestclusterN1");
+  iEvent.put(dijetbestclusterN2,"dijetbestclusterN2");
   iEvent.put(dijetbestclusterlxy,"dijetbestclusterlxy");
 
 }
