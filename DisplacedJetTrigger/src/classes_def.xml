@@ -1,8 +1,0 @@
-<lcgdict>
-  <class name="track"/>
-  <class name="std::vector<track>" />
-  <class name="jet"/>
-  <class name="std::vector<jet>"/>
-  <class name="pfjet"/>
-  <class name="std::vector<pfjet>"/>
-</lcgdict>
