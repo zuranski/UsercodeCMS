@@ -249,7 +249,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      dijetPosip2dFrac->push_back(goodVtx ? nposip2d/float(n) : -1);
      dijetVtxN1->push_back(goodVtx ? VtxN1 : -1);
      dijetVtxN2->push_back(goodVtx ? VtxN2 : -1);
-     
+    
      // do glxy stuff here
      helpers help;
      dijetglxydistall->push_back(goodVtx ? help.AvgDistance(glxysToVertex,lxy) : -1);
@@ -272,10 +272,6 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
            break;
        }
      }
-
-     if(goodVtx)
-       std::cout << clrN1 << " " << clrN2 << " " << bestcluster.size() << std::endl;
-
 
      dijetglxyrmsclr->push_back(goodVtx ? help.RMS(bestcluster,lxy) : -1);
      dijetglxydistclr->push_back(goodVtx ? help.AvgDistance(bestcluster,lxy) : -1);
