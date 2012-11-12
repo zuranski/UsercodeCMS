@@ -28,7 +28,7 @@ def options() :
                  ('FT_R_44_V11::All','/store/data/Run2011B/HT/RECO/19Nov2011-v1/10001/B2E314BC-4746-E111-9BC1-00261894390A.root')],
         "53X" : [('START53_V7F::All','/store/mc/Summer12_DR53X/QCD_Pt-170to300_TuneZ2star_8TeV_pythia6/AODSIM/PU_S10_START53_V7A-v2/00000/0CECB336-B70E-E211-B22D-0018F3D096CE.root'),
                  ('START53_V7F::All','/store/mc/Summer12_DR53X/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau35To3500_8TeV-pythia6/AODSIM/DEBUG_PU_S10_START53_V7A-v1/0000/9C61CA50-0BF3-E111-91E1-003048D2BB22.root'),
-                 ('FT_53_V10_AN2','/store/data/Run2012C/JetHT/AOD/PromptReco-v2/000/199/021/EC91A7AA-1BD1-E111-A51D-BCAEC5329717.root')]
+                 ('FT_53_V10_AN2::All','/store/data/Run2012C/JetHT/AOD/PromptReco-v2/000/199/021/EC91A7AA-1BD1-E111-A51D-BCAEC5329717.root')]
         }["53X"][len(options.signal)+ 2*options.isData]
     options.files = options.files if options.files else defaultFile
     options.GlobalTag = options.GlobalTag if options.GlobalTag else defaultGT

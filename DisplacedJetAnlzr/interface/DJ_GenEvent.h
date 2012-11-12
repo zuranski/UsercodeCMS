@@ -5,8 +5,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "SimDataFormats/GeneratorProducts/interface/HepMCProduct.h"
-#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 class DJ_GenEvent : public edm::EDProducer {
  public: 

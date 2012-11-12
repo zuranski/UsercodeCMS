@@ -49,7 +49,8 @@ void DJ_Triggers::produce( edm::Event& event, const edm::EventSetup& setup) {
   if(results.isValid()) {
     const edm::TriggerNames& names = event.triggerNames(*results);
     for(unsigned i=0; i < results->size(); i++) {
-        
+
+      // is it an interesting trigga
       bool interestingTrigger = false;
       for (unsigned int j=0; j<hltpaths_.size(); j++){
         // match with the triggerName, remove last character which is a wildcard *
@@ -60,6 +61,15 @@ void DJ_Triggers::produce( edm::Event& event, const edm::EventSetup& setup) {
       }
       if (!interestingTrigger) continue;
 
+      unsigned int prescale = hltConfig.prescaleValue(event,setup,names.triggerName(i));
+      bool accept = results->accept(i);
+      // check if triggered failed on a prescaler
+      if (prescale>1 && !accept){
+        const std::string& moduleLabel = hltConfig.moduleLabel(i,results->index(i));
+        const std::string& moduleType = hltConfig.moduleType(moduleLabel);
+        if (moduleType=="HLTPrescaler" || moduleType=="TriggerResultsFilter") continue;
+      }
+      
       (*prescaled)[names.triggerName(i)] = hltConfig.prescaleValue(event,setup,names.triggerName(i));
       (*triggered)[names.triggerName(i)] = results->accept(i) ;
       const std::vector<std::pair<bool,std::string> >&  l1Seeds = hltConfig.hltL1GTSeeds(i);

@@ -53,6 +53,16 @@ void DJ_TriggerObjects::produce(edm::Event& iEvent, const edm::EventSetup& iSetu
       bool interestingObject = false;
       for(size_t i=0;i<ObjectsToStore.size();i++){
         //if (name.find(ObjectsToStore[i]) != std::string::npos){
+        //very dirty hack to store hltHT300+2VeryCentralPt60 (tags not saved)
+        // this object should be present whenever hltHT300 fired..
+        if (name=="hlt2DisplacedHT300L1FastJetL3Filter"){
+          trgobjTag->push_back("hltDoubleJet60L1FastJetVeryCentral");
+          trgobjPt->push_back(0);
+          trgobjEta->push_back(0);
+          trgobjPhi->push_back(0);
+          trgobjMass->push_back(0);   
+        }
+
         if (name==ObjectsToStore[i]){
           interestingObject = true;
           break; 
