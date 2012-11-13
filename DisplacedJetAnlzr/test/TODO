@@ -1,3 +1,2 @@
 
-- Primary Vertices and generalTracks with quality
-- ExoFrac for signal before vertexing
+hcalLaserEventFilter is done with noiseSummary so far, wait for the final list of events and change hcalLaserEventFilter!!!

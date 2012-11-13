@@ -2,7 +2,7 @@
 
 DJ_Event::DJ_Event(const edm::ParameterSet& iConfig):
 patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag")) {
-  produces <bool>         ( "isRealData"  );
+  produces <bool>         ( "realData"  );
   produces <unsigned int> ( "run"   );
   produces <unsigned int> ( "event" );
   produces <unsigned int> ( "lumiSection" );
@@ -17,7 +17,7 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
 void DJ_Event::
 produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 
-  std::auto_ptr<bool >     isRealData ( new bool(        iEvent.isRealData()      ) );
+  std::auto_ptr<bool >     realData ( new bool(        iEvent.isRealData()      ) );
   std::auto_ptr<unsigned int >  run   ( new unsigned int(iEvent.id().run()        ) );
   std::auto_ptr<unsigned int >  event ( new unsigned int(iEvent.id().event()      ) );
   std::auto_ptr<unsigned int >  ls    ( new unsigned int(iEvent.luminosityBlock() ) );
@@ -31,7 +31,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   std::auto_ptr<double >        time  	      ( new double(sec+usec/conv));
 
   edm::Handle<reco::VertexCollection> PrimaryVertices;
-  iEvent.getByLabel("offlinePrimaryVertices", PrimaryVertices );
+  iEvent.getByLabel("goodVertices", PrimaryVertices );
   std::auto_ptr<unsigned int> nPV ( new unsigned int(PrimaryVertices->size() ) );
 
   edm::Handle<reco::TrackCollection> generalTracks;
@@ -48,7 +48,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   }
   std::auto_ptr<float> pfHT ( new float(ht) );
 
-  iEvent.put( isRealData, "isRealData" );
+  iEvent.put( realData, "realData" );
   iEvent.put( run,   "run"   );
   iEvent.put( event, "event" );
   iEvent.put( ls   , "lumiSection" );

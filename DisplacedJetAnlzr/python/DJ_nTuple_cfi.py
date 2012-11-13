@@ -9,7 +9,7 @@ class DJ(object) :
     def path(self) :
         return cms.Path(  self.initialFilters()
                          *self.HbheNoiseFilterResult()
-			 #*self.MetFilterFlags()
+			 *self.MetFilterFlags()
                          *self.Pat()
                          *self.JetSelector()
                          *self.common() 
@@ -89,11 +89,7 @@ class DJ(object) :
 
     def HbheNoiseFilterResult(self) :
         self.process.load('CommonTools/RecoAlgos/HBHENoiseFilterResultProducer_cfi')
-        self.process.HBHENoiseFilterResultProducerNoIso = self.process.HBHENoiseFilterResultProducer.clone( minIsolatedNoiseSumE = 999999.0,
-                                                                                              minNumIsolatedNoiseChannels = 999999,
-                                                                                              minIsolatedNoiseSumEt = 999999.0  )
-        self.process.hcalNoiseSummaryExists = cms.EDFilter('DJ_HcalNoiseSummaryExists')
-        return (cms.Sequence(self.process.hcalNoiseSummaryExists + self.process.HBHENoiseFilterResultProducer + self.process.HBHENoiseFilterResultProducerNoIso))
+        return (cms.Sequence(self.process.HBHENoiseFilterResultProducer))
 
     def MetFilterFlags(self) :
         # https://twiki.cern.ch/twiki/bin/view/CMS/MissingETOptionalFilters
@@ -103,6 +99,14 @@ class DJ(object) :
         from RecoMET.METFilters.greedyMuonPFCandidateFilter_cfi import greedyMuonPFCandidateFilter
         from RecoMET.METFilters.EcalDeadCellTriggerPrimitiveFilter_cfi import EcalDeadCellTriggerPrimitiveFilter
         from RecoMET.METFilters.EcalDeadCellBoundaryEnergyFilter_cfi import EcalDeadCellBoundaryEnergyFilter
+        from RecoMET.METFilters.eeBadScFilter_cfi import eeBadScFilter
+        from RecoMET.METFilters.ecalLaserCorrFilter_cfi import ecalLaserCorrFilter
+
+        self.process.goodVertices = cms.EDFilter("VertexSelector",
+                                                 filter = cms.bool(False),
+                                                 src = cms.InputTag("offlinePrimaryVertices"),
+                                                 cut = cms.string("!isFake && ndof > 4 && abs(z) <= 24 && position.rho < 2")
+        )
 
         self.process.trackingFailureFilterFlag = trackingFailureFilter.clone(taggingMode = True)#, quiet = True)
         self.process.hcalLaserEventFilterFlag = hcalLaserEventFilter.clone(taggingMode = True)
@@ -117,12 +121,17 @@ class DJ(object) :
                                                                               enableGap = False,
                                                                               limitDeadCellToChannelStatusEB = cms.vint32(12,14),
                                                                               limitDeadCellToChannelStatusEE = cms.vint32(12,14))
+        self.process.eeBadScFilterFlag = eeBadScFilter.clone(taggingMode = True)
+        self.process.ecalLaserCorrFilterFlag = ecalLaserCorrFilter.clone(taggingMode = True)
 
-        return (cms.Sequence( self.process.trackingFailureFilterFlag *
+        return (cms.Sequence( self.process.goodVertices *
+                     self.process.trackingFailureFilterFlag *
                      self.process.hcalLaserEventFilterFlag *
                      self.process.greedyMuonPFCandidateFilterFlag *
                      self.process.inconsistentMuonPFCandidateFilterFlag *
-                     self.process.ecalDeadCellTPFilterFlag
-                     # * self.process.ecalDeadCellBEFilterFlag # product not found : EcalRecHitsEB
+                     self.process.ecalDeadCellTPFilterFlag *
+                     self.process.ecalDeadCellBEFilterFlag *
+                     self.process.eeBadScFilterFlag *
+                     self.process.ecalLaserCorrFilterFlag
                      ))
 

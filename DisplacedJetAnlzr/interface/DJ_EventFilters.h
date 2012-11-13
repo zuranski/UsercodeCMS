@@ -30,15 +30,6 @@ class DJ_EventFilters : public edm::EDProducer {
   const edm::InputTag   hcalNoiseInputTag;
   const edm::InputTag   beamHaloInputTag;
 
-  const edm::InputTag trackingFilterJetInputTag   ;
-  const double trackingFilterDzTrVtxMax    ;
-  const double trackingFilterDxyTrVtxMax   ;
-  const double trackingFilterMinSumPtOverHT;
-
-  const edm::InputTag   ecalMaskedCellDRFilterInputTag , caloBoundaryDRFilterInputTag;
-  //
-  const edm::InputTag   hcalLaserEventFilterInputTag , ecalDeadCellTriggerPrimitiveFilterInputTag , ecalDeadCellBoundaryEnergyFilterInputTag;
-  const edm::InputTag   trackingFailureFilterInputTag , badEESupercrystalFilterInputTag, ecalLaserCorrFilterInputTag;
 };
 
 #endif
