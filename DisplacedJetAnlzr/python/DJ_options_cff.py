@@ -14,7 +14,7 @@ def options() :
     options.register('GlobalTag', mytype = VP.varType.string)
     options.register('quiet', default = True )
     options.register('isData', default = True )
-    options.register('signal', default = '', info = "signal type u (UDS) or b (B)", mytype = VP.varType.string)
+    options.register('signal', default = False )
     options.register('jetCorrections', default = ['L1FastJet','L2Relative','L3Absolute','L2L3Residual'], #L2L3Residual removed from options for simulation (below)
                      info = "jet correction levels to apply", mult = VP.multiplicity.list, mytype = VP.varType.string)
     
@@ -29,7 +29,7 @@ def options() :
         "53X" : [('START53_V7F::All','/store/mc/Summer12_DR53X/QCD_Pt-170to300_TuneZ2star_8TeV_pythia6/AODSIM/PU_S10_START53_V7A-v2/00000/0CECB336-B70E-E211-B22D-0018F3D096CE.root'),
                  ('START53_V7F::All','/store/mc/Summer12_DR53X/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau35To3500_8TeV-pythia6/AODSIM/DEBUG_PU_S10_START53_V7A-v1/0000/9C61CA50-0BF3-E111-91E1-003048D2BB22.root'),
                  ('FT_53_V10_AN2::All','/store/data/Run2012C/JetHT/AOD/PromptReco-v2/000/199/021/EC91A7AA-1BD1-E111-A51D-BCAEC5329717.root')]
-        }["53X"][len(options.signal)+ 2*options.isData]
+        }["53X"][int(options.signal)+ 2*options.isData]
     options.files = options.files if options.files else defaultFile
     options.GlobalTag = options.GlobalTag if options.GlobalTag else defaultGT
 

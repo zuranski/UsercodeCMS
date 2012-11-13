@@ -40,13 +40,11 @@ class DJ(object) :
                )
 
     def initialFilters(self):
-        for module in ((['SignalFilterUDS'] if self.options.signal=='u' else []) +
-                       (['SignalFilterB'] if self.options.signal=='b' else []) +
+        for module in ((['SignalFilter'] if self.options.signal else []) +
                        (['TriggerSelector'] if self.options.isData else [])):
 	    print module
             self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
-        return ( self.evalSequence('dj%s',((['signalfilteruds'] if self.options.signal=='u' else []) +
-                                           (['signalfilterb'] if self.options.signal=='b' else []) +
+        return ( self.evalSequence('dj%s',((['signalfilter'] if self.options.signal else []) +
                                            (['triggerselector'] if self.options.isData else []) )
                                     )
                    )
