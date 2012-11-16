@@ -58,7 +58,7 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
     jetChgHadFrac->push_back(j.chargedHadronEnergyFraction());
     jetChgHadN->push_back(j.chargedHadronMultiplicity());
     jetNeuHadFrac->push_back(j.neutralHadronEnergyFraction());
-    jetNeuHadN->push_back(j.neutralMultiplicity());
+    jetNeuHadN->push_back(j.neutralHadronMultiplicity());
     jetPhFrac->push_back(j.photonEnergyFraction());
     jetPhN->push_back(j.photonMultiplicity());
     jetEleFrac->push_back(j.electronEnergyFraction());
