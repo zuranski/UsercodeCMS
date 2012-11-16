@@ -6,5 +6,5 @@ import FWCore.ParameterSet.Config as cms
 #
 trackerPatJets = cms.EDFilter("PATJetSelector",
     src = cms.InputTag("selectedPatJets"),
-    cut = cms.string("abs(eta)<2.")
+    cut = cms.string("abs(eta)<2. & pt>40")
 )

@@ -12,6 +12,7 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
   produces <unsigned int> ( "nPV" );
   produces <unsigned int> ( "nTrks" );
   produces <float> ( "pfHT" );
+  produces <float> ( "caloHT" );
 }
 
 void DJ_Event::
@@ -47,6 +48,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     ht+=j.et();
   }
   std::auto_ptr<float> pfHT ( new float(ht) );
+  
+  edm::Handle<std::vector<pat::Jet> > caloJetsHandle;
+  iEvent.getByLabel("patJetsAK5Calo",caloJetsHandle);
+
+  float cht=0;
+  for (size_t i=0;i<caloJetsHandle->size();i++){
+    pat::Jet j = caloJetsHandle->at(i);
+    if (fabs(j.eta())<3 && j.pt()>40) cht+=j.et();
+  }
+  std::auto_ptr<float> caloHT ( new float(cht) );
 
   iEvent.put( realData, "realData" );
   iEvent.put( run,   "run"   );
@@ -58,4 +69,5 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( nPV,   "nPV"   );
   iEvent.put( nTrks, "nTrks" );
   iEvent.put( pfHT, "pfHT"   );
+  iEvent.put( caloHT, "caloHT"   );
 }

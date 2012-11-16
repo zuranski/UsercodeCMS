@@ -54,11 +54,20 @@ class DJ(object) :
 
         from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching,removeCleaning,restrictInputToAOD,removeAllPATObjectsBut
         from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection 
+        from PhysicsTools.PatAlgos.tools.jetTools import addJetCollection 
 
         if self.options.isData: removeMCMatching(self.process, ['All'])
         restrictInputToAOD(self.process)
         removeCleaning(self.process)
         removeAllPATObjectsBut(self.process, ['Jets','METs'])
+        addJetCollection(self.process,
+	    		    cms.InputTag('ak5CaloJets'),
+			    'AK5',
+			    'Calo',
+			    jetCorrLabel = ('AK5Calo',self.options.jetCorrections),
+			    genJetCollection = cms.InputTag('ak5GenJets'),
+			    doType1MET = False,
+                       )
         switchJetCollection(self.process,
 	    		    cms.InputTag('ak5PFJets'),
 			    doJTA = True,
@@ -70,7 +79,7 @@ class DJ(object) :
 			    jetIdLabel = 'ak5pf'
                        )
 
-        self.process.selectedPatJets.cut = cms.string("pt > 40 && \
+        self.process.selectedPatJets.cut = cms.string("pt > 30 && \
                                                        abs(eta) < 3.0 && \
                                                        neutralHadronEnergyFraction < 0.9 && \
                                                        neutralEmEnergyFraction < 0.90 && \
