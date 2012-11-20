@@ -7,7 +7,6 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_Event.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_GenEvent.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_EventFilters.h"
-#include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_HcalNoiseSummaryExists.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_Jets.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_DiJets.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_JetVertices.h"
@@ -20,7 +19,6 @@ DEFINE_FWK_MODULE(DJ_PileupSummary);
 DEFINE_FWK_MODULE(DJ_Event);
 DEFINE_FWK_MODULE(DJ_GenEvent);
 DEFINE_FWK_MODULE(DJ_EventFilters);
-DEFINE_FWK_MODULE(DJ_HcalNoiseSummaryExists);
 DEFINE_FWK_MODULE(DJ_Jets);
 DEFINE_FWK_MODULE(DJ_DiJets);
 DEFINE_FWK_MODULE(DJ_JetVertices);
