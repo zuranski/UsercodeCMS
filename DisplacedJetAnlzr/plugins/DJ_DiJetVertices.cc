@@ -134,8 +134,9 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
        reco::TransientTrack t_trk = theB->build(trk);
        Measurement1D ip2d = IPTools::signedTransverseImpactParameter(t_trk,direction,pv).second;
+       Measurement1D ip3d = IPTools::signedImpactParameter3D(t_trk,direction,pv).second;
+        if (fabs(ip3d.value())<0.03) nPromptTracks+=1;
         if (fabs(ip2d.value())<PromptTrackDxyCut_){ 
-          nPromptTracks += 1; 
           PromptEnergy += sqrt(0.1396*0.1396 + trk->p()*trk->p());
           continue;
         }
