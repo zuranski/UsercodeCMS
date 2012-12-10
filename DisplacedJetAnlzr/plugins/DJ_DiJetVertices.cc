@@ -235,9 +235,9 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
      dijetLxy->push_back(goodVtx ? lxy : -1);
      dijetLxysig->push_back(goodVtx ? sig : -1);
-     dijetVtxX->push_back(goodVtx ? vtx.position().x() : 999);
-     dijetVtxY->push_back(goodVtx ? vtx.position().y() : 999);
-     dijetVtxZ->push_back(goodVtx ? vtx.position().z() : 999);
+     dijetVtxX->push_back(goodVtx ? (vtx.position().x()-pv.x()) : 999);
+     dijetVtxY->push_back(goodVtx ? (vtx.position().y()-pv.y()) : 999);
+     dijetVtxZ->push_back(goodVtx ? (vtx.position().z()-pv.z()) : 999);
      dijetVtxChi2->push_back(goodVtx ? vtx.normalizedChi2() : -1);
      dijetVtxmass->push_back(goodVtx ? vtxP4.M() : -1);
      dijetVtxpt->push_back(goodVtx ? vtxP4.Pt() : -1);

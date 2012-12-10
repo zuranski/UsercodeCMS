@@ -199,9 +199,9 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
      jetLxy->push_back(goodVtx ? lxy : -1);
      jetLxysig->push_back(goodVtx ? sig : -1);
-     jetVtxX->push_back(goodVtx ? vtx.position().x() : 999);
-     jetVtxY->push_back(goodVtx ? vtx.position().y() : 999);
-     jetVtxZ->push_back(goodVtx ? vtx.position().z() : 999);
+     jetVtxX->push_back(goodVtx ? (vtx.position().x()-pv.x()) : 999);
+     jetVtxY->push_back(goodVtx ? (vtx.position().y()-pv.y()) : 999);
+     jetVtxZ->push_back(goodVtx ? (vtx.position().z()-pv.z()) : 999);
      jetVtxChi2->push_back(goodVtx ? vtx.normalizedChi2() : -1);
      jetVtxmass->push_back(goodVtx ? vtxP4.M() : -1);
      jetVtxpt->push_back(goodVtx ? vtxP4.Pt() : -1);
