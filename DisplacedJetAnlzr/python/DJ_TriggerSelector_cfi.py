@@ -14,6 +14,7 @@ paths = [
 	 #'HLT_HT250_DoubleDisplacedPFJet60_ChgFraction10_v*', #2012 5e33
 	 #'HLT_HT250_SingleDisplacedPFJet60_v*', #2012 5e33
 	 #'HLT_HT250_SingleDisplacedPFJet60_ChgFraction10_v*', #2012 5e33
+         'HLT_IsoMu24_eta2p1_v*'
         ]
 
 import HLTrigger.HLTfilters.hltHighLevel_cfi

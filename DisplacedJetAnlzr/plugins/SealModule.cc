@@ -11,6 +11,7 @@
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_DiJets.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_JetVertices.h"
 #include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_DiJetVertices.h"
+#include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_Muons.h"
 
 DEFINE_FWK_MODULE(DJTree);
 DEFINE_FWK_MODULE(DJ_Triggers);
@@ -23,4 +24,5 @@ DEFINE_FWK_MODULE(DJ_Jets);
 DEFINE_FWK_MODULE(DJ_DiJets);
 DEFINE_FWK_MODULE(DJ_JetVertices);
 DEFINE_FWK_MODULE(DJ_DiJetVertices);
+DEFINE_FWK_MODULE(DJ_Muons);
 

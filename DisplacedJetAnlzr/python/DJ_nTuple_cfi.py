@@ -29,13 +29,13 @@ class DJ(object) :
     def common(self) :
         for module in ((['PileupSummary','GenEvent'] if not self.options.isData else [])+
 		       ['Triggers','TriggerObjects','EventFilters','Event','Jets','DiJets']+
-		       ['JetVertices','DiJetVertices']) :
+		       ['JetVertices','DiJetVertices','Muons']) :
 	    print module
             self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
 
         return (  self.evalSequence('dj%s',((['pileupsummary','genevent'] if not self.options.isData else []) +
 					   ['triggers','triggerobjects','eventfilters','event','jets','dijets']+
-                                           ['jetvertices','dijetvertices'])
+                                           ['jetvertices','dijetvertices','muons'])
                                    )
                )
 
@@ -59,7 +59,7 @@ class DJ(object) :
         if self.options.isData: removeMCMatching(self.process, ['All'])
         restrictInputToAOD(self.process)
         removeCleaning(self.process)
-        removeAllPATObjectsBut(self.process, ['Jets','METs'])
+        removeAllPATObjectsBut(self.process, ['Jets','METs','Muons'])
         addJetCollection(self.process,
 	    		    cms.InputTag('ak5CaloJets'),
 			    'AK5',
