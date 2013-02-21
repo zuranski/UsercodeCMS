@@ -6,12 +6,14 @@
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
 
 class DJ_GenEvent : public edm::EDProducer {
  public: 
   explicit DJ_GenEvent(const edm::ParameterSet&);
  private: 
   void produce( edm::Event &, const edm::EventSetup & );
+  const reco::Candidate* deepMother(const reco::Candidate* p);
 };
 
 #endif

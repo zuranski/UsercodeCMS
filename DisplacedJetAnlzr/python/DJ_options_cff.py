@@ -27,7 +27,9 @@ def options() :
                  ('START44_V9B::All','/store/mc/Fall11/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau-350_7TeV-pythia6/GEN-SIM-RECODEBUG/DEBUG-PU_S6_START44_V9B-v4/0000/E83B1DB8-158B-E111-9DB4-0017A477003C.root'),
                  ('FT_R_44_V11::All','/store/data/Run2011B/HT/RECO/19Nov2011-v1/10001/B2E314BC-4746-E111-9BC1-00261894390A.root')],
 
-        "53X" : [('START53_V7F::All','/store/mc/Summer12_DR53X/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau35To3500_8TeV-pythia6/AODSIM/DEBUG_PU_S10_START53_V7A-v1/0000/9C61CA50-0BF3-E111-91E1-003048D2BB22.root'),
+        "53X" : [
+                 #('START53_V7F::All','/store/mc/Summer12_DR53X/HTo2LongLivedTo4F_MH-1000_MFF-350_CTau35To3500_8TeV-pythia6/AODSIM/DEBUG_PU_S10_START53_V7A-v1/0000/9C61CA50-0BF3-E111-91E1-003048D2BB22.root'),
+                 ('START53_V7F::All','/store/mc/Summer12_DR53X/HTo2LongLivedTo4F_MH-200_MFF-50_CTau20To2000_8TeV-pythia6/AODSIM/PU_S10_START53_V7A-v1/00000/7A2CB2BB-6C18-E211-AB1B-003048C69416.root'),
 		 ('START53_V7F::All','/store/mc/Summer12_DR53X/QCD_Pt-170to300_TuneZ2star_8TeV_pythia6/AODSIM/PU_S10_START53_V7A-v2/00000/0CECB336-B70E-E211-B22D-0018F3D096CE.root'),
 		 ('FT_53_V6_AN2::All','/store/data/Run2012B/JetHT/AOD/13Jul2012-v1/00000/04989369-BFD2-E111-B190-002618943933.root'),
 		 ('FT_53_V10_AN2::All','/store/data/Run2012C/JetHT/AOD/24Aug2012-v2/00000/22AFA398-D600-E211-AD2E-00261894385A.root'),
@@ -40,7 +42,7 @@ def options() :
                  ('FT_53_V10_AN2::All','/store/data/Run2012C/SingleMu/AOD/24Aug2012-v1/00000/10FD4F26-FAEE-E111-9AB5-00259073E4FC.root'),
                  ('GR_P_V41_AN2::All','/store/data/Run2012C/SingleMu/AOD/PromptReco-v2/000/198/955/247727CE-98CF-E111-B2EF-5404A63886A0.root'),
                  ('GR_P_V42_AN2::All','/store/data/Run2012D/SingleMu/AOD/PromptReco-v1/000/204/506/8078B6DD-9210-E211-80BE-BCAEC5329700.root'),]
-        }["53XCtrl"][int(not options.signal)+ options.isData]
+        }["53X"][int(not options.signal)+ options.isData]
     options.files = options.files if options.files else defaultFile
     options.GlobalTag = options.GlobalTag if options.GlobalTag else defaultGT
 
