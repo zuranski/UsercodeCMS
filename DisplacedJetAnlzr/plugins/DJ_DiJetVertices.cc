@@ -99,6 +99,11 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      pat::Jet jet2 = patJetsHandle->at(k);
      reco::Candidate::LorentzVector p4 = jet1.p4() + jet2.p4();
 
+     //DEBUG
+     //std::cout << "jet1: pt,eta,phi" << jet1.pt() << " " <<jet1.eta() << " " <<jet1.phi() << std::endl; 
+     //std::cout << "jet2: pt,eta,phi" << jet2.pt() << " " <<jet2.eta() << " " <<jet2.phi() << std::endl; 
+     //ENDDEBUG
+
      GlobalVector direction(p4.px(), p4.py(), p4.pz());
      direction = direction.unit();
 
@@ -182,13 +187,20 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      int VtxN2=0;
      std::vector<float> glxysVertex;
      ROOT::Math::LorentzVector<ROOT::Math::PxPyPzE4D<double> > vtxP4;
- 
+
+     //DEBUG
+     //std::cout << "vtx Lxy: " << lxy << std::endl; 
+     //ENDDEBUG
      for (size_t j=0;j<trksToVertex.size();j++){
        reco::TransientTrack t_trk = trksToVertex[j];
        if (jvtx.trackWeight(t_trk)>vtxWeight_){
          GlobalVector p3 = t_trk.trajectoryStateClosestToPoint(jvtx.position()).momentum();
  	 vtxP4 += ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >(p3.x(),p3.y(),p3.z(),0.13957018);
          charge+=t_trk.track().charge();
+	 // DEBUG
+         //std::cout << "vtx_trk: pt,eta,phi,N,weight " << t_trk.track().pt() << " " << t_trk.track().eta() << " " << t_trk.track().phi() << " " << indicesToVertex[j]
+         //<< " " << jvtx.trackWeight(t_trk) << std::endl;
+	 // END DEBUG
          if (indicesToVertex[j] == 1) VtxN1+=1;
          if (indicesToVertex[j] == 2) VtxN2+=1;
          if (ip2dsToVertex[j]>0) nposip2d+=1;
