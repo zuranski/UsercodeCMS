@@ -13,7 +13,7 @@ class DJ_PileupSummary : public edm::EDProducer {
   explicit DJ_PileupSummary(const edm::ParameterSet&);
  private: 
   void produce( edm::Event &, const edm::EventSetup & );
-  const edm::InputTag inputTag;
+  const edm::InputTag inputTag,pdfCTEQWeightsInputTag,pdfMSTWWeightsInputTag,pdfNNPDFWeightsInputTag;
   const std::string Prefix,Suffix;
 };
 

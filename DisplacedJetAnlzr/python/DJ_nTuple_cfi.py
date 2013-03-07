@@ -7,7 +7,8 @@ class DJ(object) :
         self.empty = process.empty = cms.Sequence()
 
     def path(self) :
-        return cms.Path(  self.initialFilters()
+        return cms.Path( self.MCWeights()
+                         *self.initialFilters()
                          *self.HbheNoiseFilterResult()
 			 *self.MetFilterFlags()
                          *self.Pat()
@@ -95,6 +96,12 @@ class DJ(object) :
     def JetSelector(self):
         self.process.load("MyAnalysis/DisplacedJetAnlzr/JetSelector_cfi")
         return (cms.Sequence(self.process.trackerPatJets))
+
+    def MCWeights(self):
+        if self.options.signal:
+            self.process.load("MyAnalysis/DisplacedJetAnlzr/PdfWeightProducer_cfi")
+            return (cms.Sequence(self.process.pdfWeights))  
+        else: return (self.empty)
 
     def HbheNoiseFilterResult(self) :
         self.process.load('CommonTools/RecoAlgos/HBHENoiseFilterResultProducer_cfi')
