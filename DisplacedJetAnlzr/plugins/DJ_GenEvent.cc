@@ -19,6 +19,7 @@ DJ_GenEvent::DJ_GenEvent(const edm::ParameterSet& iConfig) {
   produces <std::vector<float> >         ( "genjetLxy2"  );
   produces <std::vector<float> >         ( "genjetCtau2"  );
   produces <float>          ( "genHT"  );
+  produces <float>          ( "HPt"  );
 }
 
 void DJ_GenEvent::
@@ -42,6 +43,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   std::auto_ptr<std::vector<float> > genjetLxy2 ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genjetCtau2 ( new std::vector<float> );
   std::auto_ptr<float> genHT ( new float() );
+  std::auto_ptr<float> HPt ( new float() );
 
   try {
 
@@ -51,11 +53,11 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
     std::vector<const reco::Candidate*> exo;
 
     for (unsigned int i = 0; i < genParticles->size(); i++) {
-
       reco::GenParticleRef p(genParticles,i);
       if (p->status()!=3) continue; //not decaying particles
 
       int pdgId=abs(p->pdgId());
+      if (pdgId==35) *HPt.get()=p->pt();
       if (pdgId!=6001114 && pdgId!=6002114 && pdgId!=6003114) continue;
       exo.push_back(p.get());
       XpdgId->push_back(pdgId);
@@ -158,6 +160,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( genjetLxy2,   "genjetLxy2"   );
   iEvent.put( genjetCtau2,   "genjetCtau2"   );
   iEvent.put( genHT,   "genHT"   );
+  iEvent.put( HPt,   "HPt"   );
 
 }
 
