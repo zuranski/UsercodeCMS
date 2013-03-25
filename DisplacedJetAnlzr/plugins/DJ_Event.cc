@@ -13,6 +13,8 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
   produces <unsigned int> ( "nTrks" );
   produces <float> ( "pfHT" );
   produces <float> ( "caloHT" );
+  produces <float> ( "caloHTup" );
+  produces <float> ( "caloHTdown" );
 }
 
 void DJ_Event::
@@ -52,12 +54,29 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   edm::Handle<std::vector<pat::Jet> > caloJetsHandle;
   iEvent.getByLabel("patJetsAK5Calo",caloJetsHandle);
 
+  iSetup.get<JetCorrectionsRecord>().get("AK5Calo",JetCorParColl); 
+  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty(JetCorPar);
+
+  //JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty("MyAnalysis/DisplacedJetAnlzr/data/Fall12_V7_MC_Uncertainty_AK5Calo.txt");
+
   float cht=0;
+  float cht_up=0;
+  float cht_down=0;
   for (size_t i=0;i<caloJetsHandle->size();i++){
     pat::Jet j = caloJetsHandle->at(i);
-    if (fabs(j.eta())<3 && j.pt()>40) cht+=j.et();
+    jecUnc->setJetEta(j.eta());
+    jecUnc->setJetPt(j.pt()); // here you must use the CORRECTED jet pt
+    double unc = jecUnc->getUncertainty(true);
+    if (fabs(j.eta())<3 && j.pt()>40) {
+      cht+=j.et();
+      cht_up+=j.et()*(1+unc);
+      cht_down+=j.et()*(1-unc);
+    }
   }
   std::auto_ptr<float> caloHT ( new float(cht) );
+  std::auto_ptr<float> caloHTup ( new float(cht_up) );
+  std::auto_ptr<float> caloHTdown ( new float(cht_down) );
 
   iEvent.put( realData, "realData" );
   iEvent.put( run,   "run"   );
@@ -70,4 +89,6 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( nTrks, "nTrks" );
   iEvent.put( pfHT, "pfHT"   );
   iEvent.put( caloHT, "caloHT"   );
+  iEvent.put( caloHTup, "caloHTup"   );
+  iEvent.put( caloHTdown, "caloHTdown"   );
 }

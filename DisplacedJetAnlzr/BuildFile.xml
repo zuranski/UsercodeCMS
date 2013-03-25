@@ -1,7 +1,5 @@
 <use   name="FWCore/Framework"/>
 <use name="rootrflx"/>
 <use name="rootmath"/>
-
-<use name="lhapdf"/>
 <export>
 </export>

@@ -6,6 +6,8 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
   // single jet
   produces <std::vector<float> > ("jetEnergy");
   produces <std::vector<float> > ("jetPt");
+  produces <std::vector<float> > ("jetPtUp");
+  produces <std::vector<float> > ("jetPtDown");
   produces <std::vector<float> > ("jetEta");
   produces <std::vector<float> > ("jetPhi");
   produces <std::vector<float> > ("jetMass");
@@ -27,6 +29,8 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
 
   std::auto_ptr<std::vector<float> > jetEnergy ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > jetPt ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > jetPtUp ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > jetPtDown ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > jetEta ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > jetPhi ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > jetMass ( new std::vector<float> );
@@ -45,11 +49,21 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
   edm::Handle<std::vector<pat::Jet> > patJetsHandle;
   iEvent.getByLabel(patJetCollectionTag_,patJetsHandle);
 
+  iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl);
+  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty(JetCorPar);
+
   for (size_t i=0;i<patJetsHandle->size();i++){
     pat::Jet j = patJetsHandle->at(i);
+    
+    jecUnc->setJetEta(j.eta());
+    jecUnc->setJetPt(j.pt()); // here you must use the CORRECTED jet pt
+    double unc = jecUnc->getUncertainty(true);
 
     jetEnergy->push_back(j.energy());
     jetPt->push_back(j.pt());
+    jetPtUp->push_back(j.pt()*(1+unc));
+    jetPtDown->push_back(j.pt()*(1-unc));
     jetEta->push_back(j.eta());
     jetPhi->push_back(j.phi());
     jetMass->push_back(j.mass());
@@ -69,6 +83,8 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
   }
 
   iEvent.put(jetPt, "jetPt" );
+  iEvent.put(jetPtUp, "jetPtUp" );
+  iEvent.put(jetPtDown, "jetPtDown" );
   iEvent.put(jetEta,"jetEta");
   iEvent.put(jetPhi,"jetPhi");
   iEvent.put(jetMass,"jetMass");
