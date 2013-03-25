@@ -13,6 +13,7 @@ class DJ(object) :
 			 *self.MetFilterFlags()
                          *self.Pat()
                          *self.JetSelector()
+                         *self.V0()
                          *self.common() 
                          * self.tree() )
     
@@ -30,13 +31,13 @@ class DJ(object) :
     def common(self) :
         for module in ((['PileupSummary','GenEvent'] if not self.options.isData else [])+
 		       ['Triggers','TriggerObjects','EventFilters','Event','Jets','DiJets']+
-		       ['JetVertices','DiJetVertices','Muons']) :
+		       ['JetVertices','DiJetVertices','Muons','KShorts']) :
 	    print module
             self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
 
         return (  self.evalSequence('dj%s',((['pileupsummary','genevent'] if not self.options.isData else []) +
 					   ['triggers','triggerobjects','eventfilters','event','jets','dijets']+
-                                           ['jetvertices','dijetvertices','muons'])
+                                           ['jetvertices','dijetvertices','muons','kshorts'])
                                    )
                )
 
@@ -96,6 +97,10 @@ class DJ(object) :
     def JetSelector(self):
         self.process.load("MyAnalysis/DisplacedJetAnlzr/JetSelector_cfi")
         return (cms.Sequence(self.process.trackerPatJets))
+
+    def V0(self):
+        self.process.load("MyAnalysis/DisplacedJetAnlzr/generalV0Candidates_cfi")
+        return (cms.Sequence(self.process.myV0Candidates))
 
     def MCWeights(self):
         if self.options.signal:
