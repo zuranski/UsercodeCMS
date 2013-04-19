@@ -150,6 +150,7 @@ DJ_KShorts::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
      KinematicParticleVertexFitter fitter;   							 
      RefCountedKinematicTree v0VertexFitTree=fitter.fit(v0Particles);
+     if (v0VertexFitTree->isEmpty()) continue;
      RefCountedKinematicParticle v0FitKinematicParticle = v0VertexFitTree->currentParticle();     
      RefCountedKinematicVertex v0FitKinematicVertex = v0VertexFitTree->currentDecayVertex();
 
