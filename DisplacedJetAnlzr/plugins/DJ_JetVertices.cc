@@ -7,6 +7,7 @@ PromptTrackDxyCut_(iConfig.getParameter<double>("PromptTrackDxyCut")),
 TrackPtCut_(iConfig.getParameter<double>("TrackPtCut")),
 TrackingEfficiencyFactor_(iConfig.getParameter<double>("TrackingEfficiencyFactor")),
 vtxWeight_(iConfig.getParameter<double>("vtxWeight")),
+PV_(iConfig.getParameter<unsigned int>("PV")),
 vtxconfig_(iConfig.getParameter<edm::ParameterSet>("vertexfitter")),
 vtxfitter_(vtxconfig_) {
 
@@ -273,7 +274,10 @@ void DJ_JetVertices::GetEventInfo(const edm::Event& iEvent, const edm::EventSetu
 
    edm::Handle<reco::VertexCollection> recVtxs;
    iEvent.getByLabel("offlinePrimaryVertices", recVtxs); 
-   pv = recVtxs->front();
+   if (recVtxs->size()>PV_) 
+     pv=recVtxs->at(PV_); 
+   else
+     pv = recVtxs->front();
 
    edm::Handle<edm::View<reco::Track> > generalTracks;
    iEvent.getByLabel("generalTracks",generalTracks);

@@ -36,6 +36,7 @@ class DJ_DiJetVertices : public edm::EDProducer {
       const edm::InputTag patJetCollectionTag_;
       bool useTrackingParticles_;
       double PromptTrackDxyCut_,TrackPtCut_,TrackingEfficiencyFactor_,vtxWeight_;
+      unsigned int PV_;
       const edm::ParameterSet vtxconfig_;
       ConfigurableVertexFitter vtxfitter_;
 
