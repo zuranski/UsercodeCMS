@@ -7,6 +7,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
+//#include "DataFormats/JetReco/src/Jet.cc"
 
 class DJ_GenEvent : public edm::EDProducer {
  public: 
@@ -14,6 +15,9 @@ class DJ_GenEvent : public edm::EDProducer {
  private: 
   void produce( edm::Event &, const edm::EventSetup & );
   const reco::Candidate* deepMother(const reco::Candidate* p);
+  void assignStableDaughters(const reco::Candidate* p, std::vector<int> & pids);
+  void FindBDaughter(const reco::Candidate* p, std::vector<const reco::Candidate*> & Bs);
+  std::vector<const reco::Candidate*> FindB(std::vector<const reco::Candidate*> Bs, int pdgId);
 };
 
 #endif
