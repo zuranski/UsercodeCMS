@@ -31,6 +31,7 @@ vtxfitter_(vtxconfig_) {
    produces<std::vector<int> > ("dijetVtxN2");
    produces<std::vector<float> > ("dijetVtxdR");
    produces<std::vector<float> > ("dijetVtxCharge");
+   produces<std::vector<float> > ("dijetTrkAvgPt");
    produces<std::vector<float> > ("dijetPosip2dFrac");
    produces<std::vector<float> > ("dijetNAvgMissHitsAfterVert");
    produces<std::vector<float> > ("dijetNAvgHitsInFrontOfVert");
@@ -73,6 +74,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::auto_ptr<std::vector<int> > dijetVtxN2 ( new std::vector<int> );
    std::auto_ptr<std::vector<float> > dijetVtxdR ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > dijetVtxCharge ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > dijetTrkAvgPt ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > dijetPosip2dFrac ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > dijetNAvgMissHitsAfterVert ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > dijetNAvgHitsInFrontOfVert ( new std::vector<float> );
@@ -131,6 +133,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      
      int nPromptTracks=0;
      float PromptEnergy=0;
+     float trkAvgPt=0;
      for (size_t j=0;j<dijettrks.size();j++){
         
        const reco::TrackRef trk = dijettrks[j];
@@ -149,6 +152,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	// tracking inefficiency factor
 	if (rand()/float(RAND_MAX) > TrackingEfficiencyFactor_) continue;
 
+	trkAvgPt+=trk->pt();
         float r = 100*3.3*trk->pt()/3.8;
         float guesslxy = ip2d.value()/sin(trk->phi()-direction.phi())*(1-2.5*fabs(ip2d.value())/r);
 
@@ -158,7 +162,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
         indicesToVertex.push_back(indices[j]);
 
      }
-
+     dijetTrkAvgPt->push_back(trksToVertex.size() > 0 ? trkAvgPt/trksToVertex.size() : -1 );
      dijetNPromptTracks->push_back(nPromptTracks);
      dijetPromptEnergyFrac->push_back(PromptEnergy/(jet1.energy()+jet2.energy()));
      dijetNDispTracks->push_back(trksToVertex.size());
@@ -228,6 +232,8 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      } // tracks to Vertex
 
      float dR = deltaR(direction.eta(),direction.phi(),vtxP4.eta(),vtxP4.phi());
+     if (VtxN1>0 && VtxN2>0)
+       std::cout << trkAvgPt/trksToVertex.size() << " " << (VtxN1+VtxN2) << std::endl;
 
      reco::Candidate::LorentzVector physicsP4;
      //reco::Candidate::LorentzVector physicsP41,physicsP42,physicsP43;
@@ -318,6 +324,7 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.put(dijetVtxN1,"dijetVtxN1");
   iEvent.put(dijetVtxN2,"dijetVtxN2");
   iEvent.put(dijetVtxCharge,"dijetVtxCharge");
+  iEvent.put(dijetTrkAvgPt,"dijetTrkAvgPt");
   iEvent.put(dijetPosip2dFrac,"dijetPosip2dFrac");
   iEvent.put(dijetNAvgHitsInFrontOfVert,"dijetNAvgHitsInFrontOfVert");
   iEvent.put(dijetNAvgMissHitsAfterVert,"dijetNAvgMissHitsAfterVert");

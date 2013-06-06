@@ -29,6 +29,7 @@ vtxfitter_(vtxconfig_) {
    produces<std::vector<int> > ("jetVtxN");
    produces<std::vector<float> > ("jetVtxdR");
    produces<std::vector<float> > ("jetVtxCharge");
+   produces<std::vector<float> > ("jetTrkAvgPt");
    produces<std::vector<float> > ("jetPosip2dFrac");
    produces<std::vector<float> > ("jetNAvgMissHitsAfterVert");
    produces<std::vector<float> > ("jetNAvgHitsInFrontOfVert");
@@ -67,6 +68,7 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
    std::auto_ptr<std::vector<int> > jetVtxN ( new std::vector<int> );
    std::auto_ptr<std::vector<float> > jetVtxdR ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > jetVtxCharge ( new std::vector<float> );
+   std::auto_ptr<std::vector<float> > jetTrkAvgPt ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > jetPosip2dFrac ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > jetNAvgMissHitsAfterVert ( new std::vector<float> );
    std::auto_ptr<std::vector<float> > jetNAvgHitsInFrontOfVert ( new std::vector<float> );
@@ -101,6 +103,7 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      
      int nPromptTracks=0;
      float PromptEnergy=0;
+     float trkAvgPt=0;
      for (size_t j=0;j<jettrks.size();j++){
         
        const reco::TrackRef trk = jettrks[j];
@@ -120,6 +123,7 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 	// tracking inefficiency factor
 	if (rand()/float(RAND_MAX) > TrackingEfficiencyFactor_) continue;
 
+        trkAvgPt+=trk->pt();
         float r = 100*3.3*trk->pt()/3.8;
         float guesslxy = ip2d.value()/sin(trk->phi()-direction.phi())*(1-2.5*fabs(ip2d.value())/r);
 
@@ -129,6 +133,7 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
      }
 
+     jetTrkAvgPt->push_back(trksToVertex.size()>0 ? trkAvgPt/trksToVertex.size() : -1);
      jetNPromptTracks->push_back(nPromptTracks);
      jetPromptEnergyFrac->push_back(PromptEnergy/jet.energy());
      jetNDispTracks->push_back(trksToVertex.size());
@@ -251,6 +256,7 @@ DJ_JetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
   iEvent.put(jetVtxdR,"jetVtxdR");
   iEvent.put(jetVtxN,"jetVtxN");
   iEvent.put(jetVtxCharge,"jetVtxCharge");
+  iEvent.put(jetTrkAvgPt,"jetTrkAvgPt");
   iEvent.put(jetPosip2dFrac,"jetPosip2dFrac");
   iEvent.put(jetNAvgHitsInFrontOfVert,"jetNAvgHitsInFrontOfVert");
   iEvent.put(jetNAvgMissHitsAfterVert,"jetNAvgMissHitsAfterVert");
