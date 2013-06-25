@@ -22,6 +22,8 @@ patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag"))
   produces <std::vector<int> > ("jetEleN");
   produces <std::vector<int> > ("jetPhN");
   produces <std::vector<int> > ("jetNConstituents");
+  produces <std::vector<float> > ("jetPtFracTh1");
+  produces <std::vector<float> > ("jetPtReduced");
 
 }
 
@@ -45,6 +47,8 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
   std::auto_ptr<std::vector<int> > jetEleN ( new std::vector<int> );
   std::auto_ptr<std::vector<int> > jetPhN ( new std::vector<int> );
   std::auto_ptr<std::vector<int> > jetNConstituents ( new std::vector<int> );
+  std::auto_ptr<std::vector<float> > jetPtFracTh1 ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > jetPtReduced ( new std::vector<float> );
 
   edm::Handle<std::vector<pat::Jet> > patJetsHandle;
   iEvent.getByLabel(patJetCollectionTag_,patJetsHandle);
@@ -59,6 +63,24 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
     jecUnc->setJetEta(j.eta());
     jecUnc->setJetPt(j.pt()); // here you must use the CORRECTED jet pt
     double unc = jecUnc->getUncertainty(true);
+
+   
+    // jet fractions for tracks with energy < 1 GeV
+    const std::vector< reco::PFCandidatePtr > constituents=j.getPFConstituents();
+    reco::Candidate::LorentzVector myP4Tot,myP4Reduced,myP4Th1;
+    for( size_t k=0;k<constituents.size();k++){
+      reco::PFCandidatePtr part = constituents.at(k);
+      myP4Tot+=part->p4();
+      if (part->energy() < 0.8 && part->particleId()<=3 && rand()/float(RAND_MAX) > 0.95) continue;
+      myP4Reduced+=part->p4();
+      if (part->energy() < 0.8 && part->particleId()<=3) continue;
+      myP4Th1+=part->p4();
+    }
+    std::cout << "fraction %: " << (1.-myP4Th1.pt()/myP4Tot.pt())*100 << std::endl;
+    std::cout << "reduction %: " << (1.-myP4Reduced.pt()/myP4Tot.pt())*100 << std::endl;
+    jetPtFracTh1->push_back(100*(1-myP4Th1.pt()/myP4Tot.pt())); 
+    jetPtReduced->push_back(j.pt()*myP4Th1.pt()/myP4Tot.pt()); 
+
 
     jetEnergy->push_back(j.energy());
     jetPt->push_back(j.pt());
@@ -100,5 +122,7 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
   iEvent.put(jetPhN,"jetPhN");
   iEvent.put(jetEleN,"jetEleN");
   iEvent.put(jetMuN,"jetMuN");
+  iEvent.put(jetPtFracTh1,"jetPtFracTh1");
+  iEvent.put(jetPtReduced,"jetPtReduced");
 
 }
