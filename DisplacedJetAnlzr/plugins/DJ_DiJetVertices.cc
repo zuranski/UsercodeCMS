@@ -232,8 +232,6 @@ DJ_DiJetVertices::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
      } // tracks to Vertex
 
      float dR = deltaR(direction.eta(),direction.phi(),vtxP4.eta(),vtxP4.phi());
-     if (VtxN1>0 && VtxN2>0)
-       std::cout << trkAvgPt/trksToVertex.size() << " " << (VtxN1+VtxN2) << std::endl;
 
      reco::Candidate::LorentzVector physicsP4;
      //reco::Candidate::LorentzVector physicsP41,physicsP42,physicsP43;
