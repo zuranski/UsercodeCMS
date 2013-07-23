@@ -1342,6 +1342,7 @@ process.djdijets = cms.EDProducer("DJ_DiJets",
 
 
 process.djdijetvertices = cms.EDProducer("DJ_DiJetVertices",
+    PV=cms.uint32(0),
     TrackingEfficiencyFactor = cms.double(1.0),
     patJetCollectionTag = cms.InputTag("trackerPatJets"),
     TrackPtCut = cms.double(1.0),
@@ -1379,6 +1380,7 @@ process.djjets = cms.EDProducer("DJ_Jets",
 
 
 process.djjetvertices = cms.EDProducer("DJ_JetVertices",
+    PV=cms.uint32(0),
     TrackingEfficiencyFactor = cms.double(1.0),
     patJetCollectionTag = cms.InputTag("trackerPatJets"),
     TrackPtCut = cms.double(1.0),
