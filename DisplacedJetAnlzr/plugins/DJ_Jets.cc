@@ -76,8 +76,8 @@ void DJ_Jets::produce(edm::Event& iEvent, const edm::EventSetup& iSetup){
       if (part->energy() < 0.8 && part->particleId()<=3) continue;
       myP4Th1+=part->p4();
     }
-    std::cout << "fraction %: " << (1.-myP4Th1.pt()/myP4Tot.pt())*100 << std::endl;
-    std::cout << "reduction %: " << (1.-myP4Reduced.pt()/myP4Tot.pt())*100 << std::endl;
+    //std::cout << "fraction %: " << (1.-myP4Th1.pt()/myP4Tot.pt())*100 << std::endl;
+    //std::cout << "reduction %: " << (1.-myP4Reduced.pt()/myP4Tot.pt())*100 << std::endl;
     jetPtFracTh1->push_back(100*(1-myP4Th1.pt()/myP4Tot.pt())); 
     jetPtReduced->push_back(j.pt()*myP4Th1.pt()/myP4Tot.pt()); 
 
