@@ -13,6 +13,8 @@ DJ_GenEvent::DJ_GenEvent(const edm::ParameterSet& iConfig) {
   produces <std::vector<float> >         ( "genqPhi"  );
   produces <std::vector<float> >         ( "genqLxy"  );
   produces <std::vector<float> >         ( "genqCtau"  );
+  produces <std::vector<float> >         ( "genqIP2d"  );
+  produces <std::vector<float> >         ( "genqIP3d"  );
   produces <std::vector<float> >         ( "genqBlxyz"  );
   produces <std::vector<float> >         ( "genjetEnergy1"  );
   produces <std::vector<float> >         ( "genjetPt1"  );
@@ -52,6 +54,8 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   std::auto_ptr<std::vector<float> > genqPhi ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genqLxy ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genqCtau ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genqIP2d ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > genqIP3d ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genqBlxyz ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genjetEnergy1 ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genjetPt1 ( new std::vector<float> );
@@ -94,8 +98,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         *HMass.get()=p->mass();
       }
       // qq 
+      /*
+      if (abs(pdgId)>1000000) {
+        std::cout << pdgId << ": " ; 
+        for (unsigned int i=0;i<p->numberOfDaughters();i++)
+	  std::cout << p->daughter(i)->pdgId() << " " ;
+        std::cout << std::endl;
+      }
+      */
       if (pdgId!=6001114 && pdgId!=6002114 && pdgId!=6003114      // emu
-      && pdgId!=6001113 && pdgId!=6002113 && pdgId!=6003113) continue;
+      && pdgId!=6001113 && pdgId!=6002113 && pdgId!=6003113 && pdgId!=1000022) continue;
       exo.push_back(p.get());
       XpdgId->push_back(pdgId);
       XPt->push_back(p->pt());
@@ -106,15 +118,22 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       unsigned int nDau = p->numberOfDaughters();
       for (unsigned int i = 0; i < nDau; i++) {
         const reco::Candidate* dau = p->daughter(i);
-        if (abs(dau->pdgId()>13)) continue;
+        if (abs(dau->pdgId()>1000000)) continue;
         float lxy = (dau->daughter(0)->vertex()-dau->vertex()).Rho();
         float lxyz = (dau->daughter(0)->vertex()-dau->vertex()).R();
+	float dPhi = deltaPhi(dau->phi(),p->phi());
+	float dR = deltaR(dau->eta(),dau->phi(),p->eta(),p->phi());
+	float ipxy=lxy*fabs(sin(dPhi));
+	float ipxyz=lxyz*fabs(sin(dR));
         genqFlavor->push_back(abs(dau->pdgId()));
         genqPt->push_back(dau->pt());
         genqPhi->push_back(dau->phi());
         genqEta->push_back(dau->eta());
         genqLxy->push_back(lxy);
         genqCtau->push_back(lxyz*p->mass()/p->p());
+	genqIP2d->push_back(ipxy);
+	genqIP3d->push_back(ipxyz);
+	
 
         int nleptons = -1;
         float blxyz = -1.;
@@ -260,6 +279,8 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( genqPhi,   "genqPhi"   );
   iEvent.put( genqLxy,   "genqLxy"   );
   iEvent.put( genqCtau,   "genqCtau"   );
+  iEvent.put( genqIP2d,   "genqIP2d"   );
+  iEvent.put( genqIP3d,   "genqIP3d"   );
   iEvent.put( genqBlxyz,   "genqBlxyz"   );
   iEvent.put( genjetEnergy1,   "genjetEnergy1"   );
   iEvent.put( genjetPt1,   "genjetPt1"   );
@@ -288,7 +309,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
 const reco::Candidate* DJ_GenEvent::deepMother(const reco::Candidate* p){
 
   if (p->pdgId() == 0 or p->mother()==NULL) return p;
-  if (p->mother()->pdgId() > 6000000)
+  if (p->mother()->pdgId() > 1000000)
     return p->mother();
   else 
     return deepMother(p->mother());
@@ -334,7 +355,6 @@ std::vector<const reco::Candidate*> DJ_GenEvent::FindB(std::vector<const reco::C
   for (unsigned int i=0;i<Bs.size();i++){
     if (abs(Bs.at(i)->pdgId())<1000) // B-meson
       if (sgn(Bs.at(i)->pdgId())==-1*sgn(pdgId)) B.push_back(Bs.at(i));
-    if (abs(Bs.at(i)->pdgId())>1000) // B-baryon
       if (sgn(Bs.at(i)->pdgId())==sgn(pdgId)) B.push_back(Bs.at(i));
   }
   return B;
