@@ -32,11 +32,16 @@ DJ_GenEvent::DJ_GenEvent(const edm::ParameterSet& iConfig) {
   produces <std::vector<float> >         ( "genjetCtau2"  );
   produces <std::vector<float> >         ( "genjetAngle2"  );
   produces <std::vector<float> >         ( "genjetCorr2"  );
+  produces <std::vector<float> >         ( "SqPt"  );
+  produces <std::vector<float> >         ( "SqPhi"  );
+  produces <std::vector<float> >         ( "SqEta"  );
+  produces <std::vector<float> >         ( "SqMass"  );
   produces <float>          ( "genHT"  );
   produces <float>          ( "HPt"  );
   produces <float>          ( "HPhi"  );
   produces <float>          ( "HEta"  );
   produces <float>          ( "HMass"  );
+  produces <bool>          ( "SqSq"  );
 }
 
 void DJ_GenEvent::
@@ -73,11 +78,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   std::auto_ptr<std::vector<float> > genjetCtau2 ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genjetAngle2 ( new std::vector<float> );
   std::auto_ptr<std::vector<float> > genjetCorr2 ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > SqPt ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > SqPhi ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > SqEta ( new std::vector<float> );
+  std::auto_ptr<std::vector<float> > SqMass ( new std::vector<float> );
   std::auto_ptr<float> genHT ( new float() );
   std::auto_ptr<float> HPt ( new float() );
   std::auto_ptr<float> HPhi ( new float() );
   std::auto_ptr<float> HEta ( new float() );
   std::auto_ptr<float> HMass ( new float() );
+  std::auto_ptr<bool> SqSq( new bool(true) );
 
   try {
 
@@ -91,13 +101,13 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
       if (p->status()!=3) continue; //not decaying particles
 
       int pdgId=abs(p->pdgId());
+      // Higgs
       if (pdgId==35) {
         *HPt.get()=p->pt();
         *HPhi.get()=p->phi();
         *HEta.get()=p->eta();
         *HMass.get()=p->mass();
       }
-      // qq 
       /*
       if (abs(pdgId)>1000000) {
         std::cout << pdgId << ": " ; 
@@ -106,6 +116,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
         std::cout << std::endl;
       }
       */
+      // squarks
+      if ((pdgId>1000000 && pdgId<1000005) || (pdgId>2000000 && pdgId<2000005)) {
+        if (p->pdgId()<0) *SqSq.get()=false;
+        SqPt->push_back(p->pt());
+        SqPhi->push_back(p->phi());
+        SqEta->push_back(p->eta());
+        SqMass->push_back(p->mass());
+      }
+
+
       if (pdgId!=6001114 && pdgId!=6002114 && pdgId!=6003114      // emu
       && pdgId!=6001113 && pdgId!=6002113 && pdgId!=6003113 && pdgId!=1000022) continue;
       exo.push_back(p.get());
@@ -298,11 +318,16 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   iEvent.put( genjetCtau2,   "genjetCtau2"   );
   iEvent.put( genjetAngle2,   "genjetAngle2"   );
   iEvent.put( genjetCorr2,   "genjetCorr2"   );
+  iEvent.put( SqPt,   "SqPt"   );
+  iEvent.put( SqPhi,   "SqPhi"   );
+  iEvent.put( SqEta,   "SqEta"   );
+  iEvent.put( SqMass,   "SqMass"   );
   iEvent.put( genHT,   "genHT"   );
   iEvent.put( HPt,   "HPt"   );
   iEvent.put( HEta,   "HEta"   );
   iEvent.put( HPhi,   "HPhi"   );
   iEvent.put( HMass,   "HMass"   );
+  iEvent.put( SqSq,   "SqSq"   );
 
 }
 
