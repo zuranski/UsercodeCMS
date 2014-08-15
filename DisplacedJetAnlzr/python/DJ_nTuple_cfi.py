@@ -33,7 +33,7 @@ class DJ(object) :
 		       ['Triggers','TriggerObjects','EventFilters','Event','Jets','DiJets']+
 		       ['JetVertices','DiJetVertices','Muons','KShorts']) :
 	    print module
-            self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
+            self.process.load('UsercodeCMS.DisplacedJetAnlzr.DJ_%s_cfi'%module)
 
         return (  self.evalSequence('dj%s',((['pileupsummary','genevent'] if not self.options.isData else []) +
 					   ['triggers','triggerobjects','eventfilters','event','jets','dijets']+
@@ -45,7 +45,7 @@ class DJ(object) :
         for module in ((['SignalFilter'] if self.options.signal else []) +
                        (['TriggerSelector'] if self.options.isData else [])):
 	    print module
-            self.process.load('MyAnalysis.DisplacedJetAnlzr.DJ_%s_cfi'%module)
+            self.process.load('UsercodeCMS.DisplacedJetAnlzr.DJ_%s_cfi'%module)
         return ( self.evalSequence('dj%s',((['signalfilter'] if self.options.signal else []) +
                                            (['triggerselector'] if self.options.isData else []) )
                                     )
@@ -95,16 +95,16 @@ class DJ(object) :
 	return self.process.patDefaultSequence
 
     def JetSelector(self):
-        self.process.load("MyAnalysis/DisplacedJetAnlzr/JetSelector_cfi")
+        self.process.load("UsercodeCMS/DisplacedJetAnlzr/JetSelector_cfi")
         return (cms.Sequence(self.process.trackerPatJets))
 
     def V0(self):
-        self.process.load("MyAnalysis/DisplacedJetAnlzr/generalV0Candidates_cfi")
+        self.process.load("UsercodeCMS/DisplacedJetAnlzr/generalV0Candidates_cfi")
         return (cms.Sequence(self.process.myV0Candidates))
 
     def MCWeights(self):
         if self.options.signal:
-            self.process.load("MyAnalysis/DisplacedJetAnlzr/PdfWeightProducer_cfi")
+            self.process.load("UsercodeCMS/DisplacedJetAnlzr/PdfWeightProducer_cfi")
             return (cms.Sequence(self.process.pdfWeights))  
         else: return (self.empty)
 

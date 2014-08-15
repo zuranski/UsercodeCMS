@@ -1,4 +1,4 @@
-#include "MyAnalysis/DisplacedJetAnlzr/interface/DJ_Event.h"
+#include "UsercodeCMS/DisplacedJetAnlzr/interface/DJ_Event.h"
 
 DJ_Event::DJ_Event(const edm::ParameterSet& iConfig):
 patJetCollectionTag_(iConfig.getParameter<edm::InputTag>("patJetCollectionTag")) {
@@ -58,7 +58,7 @@ produce(edm::Event& iEvent, const edm::EventSetup& iSetup) {
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty(JetCorPar);
 
-  //JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty("MyAnalysis/DisplacedJetAnlzr/data/Fall12_V7_MC_Uncertainty_AK5Calo.txt");
+  //JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty("UsercodeCMS/DisplacedJetAnlzr/data/Fall12_V7_MC_Uncertainty_AK5Calo.txt");
 
   float cht=0;
   float cht_up=0;

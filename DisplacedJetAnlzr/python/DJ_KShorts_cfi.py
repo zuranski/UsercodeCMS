@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetAnlzr.DJ_Jets_cfi import jetColl
+from UsercodeCMS.DisplacedJetAnlzr.DJ_Jets_cfi import jetColl
 
 djkshorts = cms.EDProducer('DJ_KShorts',
     patJetCollectionTag = cms.InputTag(jetColl),
