@@ -8,6 +8,6 @@
 <use   name="PhysicsTools/RecoUtils"/>
 <use   name="JetMETCorrections/Algorithms"/>
 
-<library   file="*.cc" name="DisplacedFermionsDJPlugins">
+<library   file="*.cc" name="DJPlugins">
   <flags   EDM_PLUGIN="1"/>
 </library>
