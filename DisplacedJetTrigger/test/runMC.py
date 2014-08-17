@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_mcV9 import *
+from UsercodeCMS.DisplacedJetTrigger.myhlt_mcV9 import *
 
 # Select exotics decaying to qq or bb.
 process.filterMC = cms.EDFilter('MCParticlePairFilter',
@@ -15,7 +15,7 @@ process.options = cms.untracked.PSet(
 )
 
 # input source
-process.load('MyAnalysis.DisplacedJetTrigger.MH_400_MFF_150_CTau400_cff')
+process.load('UsercodeCMS.DisplacedJetTrigger.MH_400_MFF_150_CTau400_cff')
 
 # genParticles
 process.load( "SimGeneral.HepPDTESSource.pythiapdt_cfi")

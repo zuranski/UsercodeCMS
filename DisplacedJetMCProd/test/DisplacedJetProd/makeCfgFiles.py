@@ -4,7 +4,7 @@ os.mkdir('cfgFiles')
 for f in os.listdir('../../python'):
 	if f.find("HTo2Long")==-1 : continue
 	if f.endswith('pyc') : continue
-	command = "cmsDriver.py MyAnalysis/DisplacedJetMCProd/python/"+f+" \
+	command = "cmsDriver.py UsercodeCMS/DisplacedJetMCProd/python/"+f+" \
  --step GEN:ProductionFilterSequence,SIM,DIGI,L1,DIGI2RAW,HLT:GRun\
  --beamspot Realistic7TeVCollision\
  --fileout GEN-SIM-RAWDEBUG.root\

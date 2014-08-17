@@ -1,5 +1,5 @@
-#ifndef MyAnalysis_DisplacedJetTrigger_track_h
-#define MyAnalysis_DisplacedJetTrigger_track_h
+#ifndef UsercodeCMS_DisplacedJetTrigger_track_h
+#define UsercodeCMS_DisplacedJetTrigger_track_h
 
 struct track {
 

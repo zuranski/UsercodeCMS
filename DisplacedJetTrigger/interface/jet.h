@@ -1,5 +1,5 @@
-#ifndef MyAnalysis_DisplacedJetTrigger_jet_h
-#define MyAnalysis_DisplacedJetTrigger_jet_h
+#ifndef UsercodeCMS_DisplacedJetTrigger_jet_h
+#define UsercodeCMS_DisplacedJetTrigger_jet_h
 
 #include <vector>
 #include "FWCore/Utilities/interface/typedefs.h"

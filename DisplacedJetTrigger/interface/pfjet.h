@@ -1,9 +1,9 @@
-#ifndef MyAnalysis_DisplacedJetTrigger_pfjet_h
-#define MyAnalysis_DisplacedJetTrigger_pfjet_h
+#ifndef UsercodeCMS_DisplacedJetTrigger_pfjet_h
+#define UsercodeCMS_DisplacedJetTrigger_pfjet_h
 
 #include <vector>
 #include "FWCore/Utilities/interface/typedefs.h"
-#include "MyAnalysis/DisplacedJetTrigger/interface/track.h"
+#include "UsercodeCMS/DisplacedJetTrigger/interface/track.h"
 
 struct pfjet {
 

@@ -1,5 +1,5 @@
-#include "MyAnalysis/DisplacedJetTrigger/interface/jet.h"
-#include "MyAnalysis/DisplacedJetTrigger/interface/pfjet.h"
+#include "UsercodeCMS/DisplacedJetTrigger/interface/jet.h"
+#include "UsercodeCMS/DisplacedJetTrigger/interface/pfjet.h"
 #include "DataFormats/Common/interface/Wrapper.h"
 
 

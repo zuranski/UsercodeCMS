@@ -10,7 +10,7 @@ curr_dir = os.getcwd()
 
 #get list of samples
 samples = []
-for f in os.listdir(cmssw_dir+'/MyAnalysis/DisplacedJetTrigger/python/'):
+for f in os.listdir(cmssw_dir+'/UsercodeCMS/DisplacedJetTrigger/python/'):
         if f.find("MH_")==-1 : continue
         if f.endswith('pyc') : continue
 	name=f[f.find('MH'):f.find('cff')-1]

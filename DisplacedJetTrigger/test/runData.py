@@ -1,5 +1,5 @@
 import FWCore.ParameterSet.Config as cms
-from MyAnalysis.DisplacedJetTrigger.myhlt_dataV9 import *
+from UsercodeCMS.DisplacedJetTrigger.myhlt_dataV9 import *
 
 # enable the TrigReport and TimeReport
 process.options = cms.untracked.PSet(
