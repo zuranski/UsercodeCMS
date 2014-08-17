@@ -54,7 +54,7 @@ class MyPythiaFilter : public edm::EDFilter {
       virtual void endJob() ;
       void assignStableDaughters(HepMC::GenParticle* p, std::vector<HepMC::GenParticle*> & daughters);
        
-      bool Kpi,K3pi;
+      bool K3pi,Kpi;
       // ----------member data ---------------------------
 };
 

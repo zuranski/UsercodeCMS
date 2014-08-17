@@ -8,5 +8,3 @@
 <use   name="TrackingTools/Records"/>
 <use   name="SimDataFormats/GeneratorProducts"/>
 <flags   EDM_PLUGIN="1"/>
-<export>
-</export>

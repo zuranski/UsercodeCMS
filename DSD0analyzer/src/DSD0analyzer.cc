@@ -30,7 +30,7 @@
 #include "DataFormats/Math/interface/Vector.h"
 
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "FWCore/Framework/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include <TString.h>
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -153,8 +153,7 @@ void DSD0Analyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSet
   InputTag tag("TriggerResults");
   iEvent.getByLabel(tag,hltresults);
 
-  TriggerNames triggerNames_;
-  triggerNames_.init(* hltresults);
+  TriggerNames triggerNames_ = iEvent.triggerNames(*hltresults);
 
   int ntrigs = hltresults->size();
   for (int itrig = 0; itrig != ntrigs; ++itrig){
