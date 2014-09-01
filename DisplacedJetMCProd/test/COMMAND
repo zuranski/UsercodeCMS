@@ -1,0 +1,1 @@
+cmsDriver.py UsercodeCMS/DisplacedJetMCProd/python/LongLivedChi0ToMuQQ_MSquark_1500_MChi_494_TuneZ2Star_8TeV_pythia6_cff.py -s GEN,SIM,DIGI,L1,DIGI2RAW,HLT:7E33v2,RAW2DIGI,L1Reco,RECO --conditions START53_V7A::All --pileup 2012_Summer_50ns_PoissonOOTPU --datamix NODATAMIXER --eventcontent AODSIM --datatier AODSIM --no_exec -n 10
