@@ -8,7 +8,7 @@ class DJ(object) :
 
     def path(self) :
         return cms.Path( self.MCWeights()
-                         *self.initialFilters()
+                         #*self.initialFilters()
                          *self.HbheNoiseFilterResult()
 			 *self.MetFilterFlags()
                          *self.Pat()
